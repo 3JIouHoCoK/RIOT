@@ -71,8 +71,8 @@ extern void lora_e5_dev_sx126x_set_rf_mode(sx126x_t *dev, sx126x_rf_mode_t rf_mo
  * Refer Section 6.6.3 RF Overview in User Manual (UM2592)
  * @{
  */
-#define FE_CTRL1            GPIO_PIN(PORT_A, 7)
-#define FE_CTRL2            GPIO_PIN(PORT_A, 6)
+#define FE_CTRL1            GPIO_PIN(PORT_A, 6)
+#define FE_CTRL2            GPIO_PIN(PORT_A, 7)
 /** @} */
 
 

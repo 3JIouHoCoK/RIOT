@@ -25,9 +25,9 @@ USEMODULE += shell_cmd_gnrc_udp
 USEMODULE += shell
 USEMODULE += shell_cmds_default
 USEMODULE += ps
-USEMODULE += netstats_l2
-USEMODULE += netstats_ipv6
-USEMODULE += netstats_rpl
+#USEMODULE += netstats_l2
+#USEMODULE += netstats_ipv6
+#USEMODULE += netstats_rpl
 
 # Optionally include DNS support. This includes resolution of names at an
 # upstream DNS server and the handling of RDNSS options in Router Advertisements
@@ -63,7 +63,7 @@ endif
 
 # Uncomment this to join RPL DODAGs even if DIOs do not contain
 # DODAG Configuration Options (see the doc for more info)
-# CFLAGS += -DCONFIG_GNRC_RPL_DODAG_CONF_OPTIONAL_ON_JOIN
+CFLAGS += -DCONFIG_GNRC_RPL_DODAG_CONF_OPTIONAL_ON_JOIN
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1

@@ -36,6 +36,7 @@ void board_init(void)
         gpio_init(FE_CTRL1, GPIO_OUT);
         gpio_init(FE_CTRL2, GPIO_OUT);
         dac_init(DAC_LINE(0));
+        dac_set(DAC_LINE(0), LORA2W_DAC);
     }
 }
 
@@ -53,18 +54,16 @@ void lora_e5_dev_sx126x_set_rf_mode(sx126x_t *dev, sx126x_rf_mode_t rf_mode)
     case SX126X_RF_MODE_RX:
         gpio_set(FE_CTRL1);
         gpio_clear(FE_CTRL2);
-         dac_set(DAC_LINE(0), 0);
         break;
     case SX126X_RF_MODE_TX_HPA:
         gpio_clear(FE_CTRL1);
         gpio_set(FE_CTRL2);
-        dac_set(DAC_LINE(0), LORA2W_DAC);
+        
         break;
     default:
     case SX126X_RF_MODE_TX_LPA:
         gpio_clear(FE_CTRL1);
         gpio_set(FE_CTRL2);
-        dac_set(DAC_LINE(0), LORA2W_DAC);
         break;
     }
 }
