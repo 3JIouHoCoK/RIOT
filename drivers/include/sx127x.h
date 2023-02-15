@@ -84,7 +84,7 @@ extern "C" {
 #define SX127X_TX_TIMEOUT_DEFAULT        (30 * MS_PER_SEC)      /**< TX timeout, 30s */
 #define SX127X_RX_SINGLE                 (false)                /**< Single byte receive mode => continuous by default */
 #define SX127X_RX_BUFFER_SIZE            (256)                  /**< RX buffer size */
-#define SX127X_RADIO_TX_POWER            (14U)                  /**< Radio power in dBm */
+#define SX127X_RADIO_TX_POWER            (-1)                  /**< Radio power in dBm */
 
 #define SX127X_EVENT_HANDLER_STACK_SIZE  (2048U)                /**< Stack size event handler */
 #define SX127X_IRQ_DIO0                  (1 << 0)               /**< DIO0 IRQ */
@@ -104,7 +104,7 @@ extern "C" {
  * @brief   GPIO mode of DIOx Pins.
  */
 #ifndef SX127X_DIO_PULL_MODE
-#define SX127X_DIO_PULL_MODE             (GPIO_IN_PD)
+#define SX127X_DIO_PULL_MODE             (GPIO_IN)
 #endif
 /** @} */
 

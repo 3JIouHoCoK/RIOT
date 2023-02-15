@@ -37,27 +37,27 @@ extern "C" {
 #endif
 
 #ifndef SX127X_PARAM_SPI_NSS
-#define SX127X_PARAM_SPI_NSS                GPIO_PIN(1, 6)       /* D10 */
+#define SX127X_PARAM_SPI_NSS                GPIO_PIN(SPI_CS_TR1_PORT_NUM, SPI_CS_TR1_PIN_NUM)       /* D10 */
 #endif
 
 #ifndef SX127X_PARAM_RESET
-#define SX127X_PARAM_RESET                  GPIO_PIN(0, 0)       /* A0 */
+#define SX127X_PARAM_RESET                  GPIO_UNDEF       /* A0 */
 #endif
 
 #ifndef SX127X_PARAM_DIO0
-#define SX127X_PARAM_DIO0                   GPIO_PIN(0, 10)      /* D2 */
+#define SX127X_PARAM_DIO0                   GPIO_PIN(INT_TR1_PORT_NUM, INT_TR1_PIN_NUM)      /* D2 */
 #endif
 
 #ifndef SX127X_PARAM_DIO1
-#define SX127X_PARAM_DIO1                   GPIO_PIN(1, 3)       /* D3 */
+#define SX127X_PARAM_DIO1                  GPIO_UNDEF       /* D3 */
 #endif
 
 #ifndef SX127X_PARAM_DIO2
-#define SX127X_PARAM_DIO2                   GPIO_PIN(1, 5)       /* D4 */
+#define SX127X_PARAM_DIO2                   GPIO_UNDEF       /* D4 */
 #endif
 
 #ifndef SX127X_PARAM_DIO3
-#define SX127X_PARAM_DIO3                   GPIO_PIN(1, 4)       /* D5 */
+#define SX127X_PARAM_DIO3                   GPIO_UNDEF       /* D5 */
 #endif
 
 #ifndef SX127X_PARAM_PASELECT
@@ -72,6 +72,44 @@ extern "C" {
 #define SX127X_PARAM_RX_SWITCH              GPIO_UNDEF
 #endif
 
+/* SECOND SX1278 Module */
+#ifndef SX127X_PARAM_SPI_NSS_2
+#define SX127X_PARAM_SPI_NSS_2               GPIO_PIN(SPI_CS_R2_PORT_NUM, SPI_CS_R2_PIN_NUM)       /* D10 */
+#endif
+
+#ifndef SX127X_PARAM_RESET_2
+#define SX127X_PARAM_RESET_2                  GPIO_UNDEF       /* A0 */
+#endif
+
+#ifndef SX127X_PARAM_DIO0_2
+#define SX127X_PARAM_DIO0_2                  GPIO_PIN(INT_R2_PORT_NUM, INT_R2_PIN_NUM)      /* D2 */
+#endif
+
+#ifndef SX127X_PARAM_DIO1_2
+#define SX127X_PARAM_DIO1_2                   GPIO_PIN(INT_R2_PORT_NUM, INT_R2_PIN_NUM)       /* D3 */
+#endif
+
+#ifndef SX127X_PARAM_DIO2_2
+#define SX127X_PARAM_DIO2_2                   GPIO_UNDEF       /* D4 */
+#endif
+
+#ifndef SX127X_PARAM_DIO3_2
+#define SX127X_PARAM_DIO3_2                   GPIO_UNDEF       /* D5 */
+#endif
+
+#ifndef SX127X_PARAM_PASELECT_2
+#define SX127X_PARAM_PASELECT_2               (SX127X_PA_RFO)
+#endif
+
+#ifndef SX127X_PARAM_TX_SWITCH_2
+#define SX127X_PARAM_TX_SWITCH_2             GPIO_UNDEF
+#endif
+
+#ifndef SX127X_PARAM_RX_SWITCH_2
+#define SX127X_PARAM_RX_SWITCH_2              GPIO_UNDEF
+#endif
+
+
 #ifndef SX127X_PARAMS
 #if defined(SX127X_USE_TX_SWITCH) || defined(SX127X_USE_RX_SWITCH)
 #define SX127X_PARAMS             { .spi            = SX127X_PARAM_SPI,          \
@@ -85,14 +123,14 @@ extern "C" {
                                     .tx_switch_pin  = SX127X_PARAM_TX_SWITCH,    \
                                     .paselect       = SX127X_PARAM_PASELECT }
 #else
-#define SX127X_PARAMS             { .spi       = SX127X_PARAM_SPI,          \
-                                    .nss_pin   = SX127X_PARAM_SPI_NSS,      \
-                                    .reset_pin = SX127X_PARAM_RESET,        \
-                                    .dio0_pin  = SX127X_PARAM_DIO0,         \
-                                    .dio1_pin  = SX127X_PARAM_DIO1,         \
-                                    .dio2_pin  = SX127X_PARAM_DIO2,         \
-                                    .dio3_pin  = SX127X_PARAM_DIO3,         \
-                                    .paselect  = SX127X_PARAM_PASELECT }
+#define SX127X_PARAMS               {   .spi       = SX127X_PARAM_SPI,\
+                                        .nss_pin   = SX127X_PARAM_SPI_NSS,\
+                                        .reset_pin = SX127X_PARAM_RESET,\
+                                        .dio0_pin  = SX127X_PARAM_DIO0,\
+                                        .dio1_pin  = SX127X_PARAM_DIO1,\
+                                        .dio2_pin  = SX127X_PARAM_DIO2,\
+                                        .dio3_pin  = SX127X_PARAM_DIO3,\
+                                        .paselect  = SX127X_PARAM_PASELECT }                                         
 #endif
 #endif
 /**@}*/

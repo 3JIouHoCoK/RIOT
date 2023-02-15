@@ -33,7 +33,7 @@
 
 #include "periph/gpio.h"
 #include "periph/spi.h"
-
+#include "periph/dac.h"
 #include "net/lora.h"
 
 #include "sx127x.h"
@@ -41,7 +41,7 @@
 #include "sx127x_registers.h"
 #include "sx127x_netdev.h"
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 /* The reset signal must be applied for at least 100 µs to trigger the manual
@@ -129,6 +129,10 @@ int sx127x_reset(const sx127x_t *dev)
 
 int sx127x_init(sx127x_t *dev)
 {
+    gpio_init(GPIO_PIN(EN_POW_RF_PORT_NUM, EN_POW_RF_PIN_NUM), GPIO_OUT);
+    gpio_set(GPIO_PIN(EN_POW_RF_PORT_NUM, EN_POW_RF_PIN_NUM));
+    dac_init(DAC_LINE(0));
+    dac_set(DAC_LINE(0), 56000U);
     /* Do internal initialization routines */
     if (_init_spi(dev) < 0) {
         DEBUG("[sx127x] error: failed to initialize SPI\n");
@@ -172,6 +176,7 @@ int sx127x_init(sx127x_t *dev)
 
 void sx127x_init_radio_settings(sx127x_t *dev)
 {
+    sx127x_reg_write(dev, SX127X_REG_TCXO, 0x19);
     DEBUG("[sx127x] initializing radio settings\n");
     sx127x_set_channel(dev, SX127X_CHANNEL_DEFAULT);
     sx127x_set_modem(dev, SX127X_MODEM_DEFAULT);
