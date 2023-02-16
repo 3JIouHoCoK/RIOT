@@ -28,7 +28,7 @@
 #include "net/netdev.h"
 #include "net/netdev/lora.h"
 #include "net/lora.h"
-
+#include "periph/dac.h"
 #include "sx127x_registers.h"
 #include "sx127x_internal.h"
 #include "sx127x_netdev.h"
@@ -47,6 +47,7 @@ void _on_dio3_irq(void *arg);
 
 static int _send(netdev_t *netdev, const iolist_t *iolist)
 {
+    dac_set(DAC_LINE(0), 56000U);
     DEBUG("[sx127x] Sending packet now.\n");
     sx127x_t *dev = container_of(netdev, sx127x_t, netdev);
 

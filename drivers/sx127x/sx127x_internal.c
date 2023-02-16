@@ -34,7 +34,7 @@
 #include "sx127x_internal.h"
 #include "sx127x_params.h"
 
-#define ENABLE_DEBUG 1
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define SX127X_SPI_SPEED    (SPI_CLK_1MHZ)

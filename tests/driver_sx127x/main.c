@@ -49,7 +49,7 @@
 static char stack[SX127X_STACKSIZE];
 static kernel_pid_t _recv_pid;
 
-static char message[32];
+static char message[128];
 static sx127x_t sx127x;
 
 int lora_setup_cmd(int argc, char **argv)

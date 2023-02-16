@@ -75,13 +75,13 @@ extern "C" {
  * @{
  */
 #define SX127X_MODEM_DEFAULT             (SX127X_MODEM_LORA)    /**< Use LoRa as default modem */
-#define SX127X_CHANNEL_DEFAULT           (868300000UL)          /**< Default channel frequency, 868.3MHz (Europe) */
-#define SX127X_HF_CHANNEL_DEFAULT        (868000000UL)          /**< Use to calibrate RX chain for LF and HF bands */
+#define SX127X_CHANNEL_DEFAULT           (435200000UL)          /**< Default channel frequency, 868.3MHz (Europe) */
+#define SX127X_HF_CHANNEL_DEFAULT        (435200000UL)          /**< Use to calibrate RX chain for LF and HF bands */
 #define SX127X_RF_MID_BAND_THRESH        (525000000UL)          /**< Mid-band threshold */
 #define SX127X_XTAL_FREQ                 (32000000UL)           /**< Internal oscillator frequency, 32MHz */
 #define SX127X_RADIO_WAKEUP_TIME         (1U)                   /**< In milliseconds [ms] */
 
-#define SX127X_TX_TIMEOUT_DEFAULT        (30 * MS_PER_SEC)      /**< TX timeout, 30s */
+#define SX127X_TX_TIMEOUT_DEFAULT        (10 * MS_PER_SEC)      /**< TX timeout, 30s */
 #define SX127X_RX_SINGLE                 (false)                /**< Single byte receive mode => continuous by default */
 #define SX127X_RX_BUFFER_SIZE            (256)                  /**< RX buffer size */
 #define SX127X_RADIO_TX_POWER            (-1)                  /**< Radio power in dBm */
@@ -104,7 +104,7 @@ extern "C" {
  * @brief   GPIO mode of DIOx Pins.
  */
 #ifndef SX127X_DIO_PULL_MODE
-#define SX127X_DIO_PULL_MODE             (GPIO_IN)
+#define SX127X_DIO_PULL_MODE             (GPIO_IN_PU)
 #endif
 /** @} */
 

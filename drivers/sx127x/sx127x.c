@@ -41,7 +41,7 @@
 #include "sx127x_registers.h"
 #include "sx127x_netdev.h"
 
-#define ENABLE_DEBUG 1
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /* The reset signal must be applied for at least 100 µs to trigger the manual
@@ -123,7 +123,7 @@ int sx127x_reset(const sx127x_t *dev)
 
         ztimer_sleep(ZTIMER_MSEC, SX127X_MANUAL_RESET_WAIT_FOR_READY_MS);
     }
-
+    dac_set(DAC_LINE(0), 0U);
     return 0;
 }
 
@@ -132,7 +132,6 @@ int sx127x_init(sx127x_t *dev)
     gpio_init(GPIO_PIN(EN_POW_RF_PORT_NUM, EN_POW_RF_PIN_NUM), GPIO_OUT);
     gpio_set(GPIO_PIN(EN_POW_RF_PORT_NUM, EN_POW_RF_PIN_NUM));
     dac_init(DAC_LINE(0));
-    dac_set(DAC_LINE(0), 56000U);
     /* Do internal initialization routines */
     if (_init_spi(dev) < 0) {
         DEBUG("[sx127x] error: failed to initialize SPI\n");
@@ -270,7 +269,7 @@ static int _init_gpios(sx127x_t *dev)
     /* Check if DIO0 pin is defined */
     if (gpio_is_valid(dev->params.dio0_pin)) {
         res = gpio_init_int(dev->params.dio0_pin, SX127X_DIO_PULL_MODE,
-                            GPIO_RISING, sx127x_on_dio0_isr, dev);
+                            GPIO_FALLING, sx127x_on_dio0_isr, dev);
         if (res < 0) {
             DEBUG("[sx127x] error: failed to initialize DIO0 pin\n");
             return res;
@@ -285,7 +284,7 @@ static int _init_gpios(sx127x_t *dev)
     /* Check if DIO1 pin is defined */
     if (gpio_is_valid(dev->params.dio1_pin)) {
         res = gpio_init_int(dev->params.dio1_pin, SX127X_DIO_PULL_MODE,
-                            GPIO_RISING, sx127x_on_dio1_isr, dev);
+                            GPIO_FALLING, sx127x_on_dio1_isr, dev);
         if (res < 0) {
             DEBUG("[sx127x] error: failed to initialize DIO1 pin\n");
             return res;
