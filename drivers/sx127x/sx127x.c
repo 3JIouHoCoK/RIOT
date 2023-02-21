@@ -41,7 +41,7 @@
 #include "sx127x_registers.h"
 #include "sx127x_netdev.h"
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 /* The reset signal must be applied for at least 100 µs to trigger the manual
@@ -75,11 +75,21 @@ static void sx127x_on_dio3_isr(void *arg);
 
 void sx127x_setup(sx127x_t *dev, const sx127x_params_t *params, uint8_t index)
 {
-    netdev_t *netdev = &dev->netdev;
+#ifdef SX127X_RADIO_HAL
+(void)dev;
+(void)params;
+(void)index;
+dev->params = *params;
+#else
+(void)dev;
+(void)params;
+(void)index;
+    //netdev_t *netdev = &dev->netdev;
 
-    netdev->driver = &sx127x_driver;
-    dev->params = *params;
-    netdev_register(&dev->netdev, NETDEV_SX127X, index);
+    //netdev->driver = &sx127x_driver;
+    //dev->params = *params;
+    //netdev_register(&dev->netdev, NETDEV_SX127X, index);
+#endif
 }
 
 int sx127x_reset(const sx127x_t *dev)

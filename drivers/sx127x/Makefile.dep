@@ -7,3 +7,6 @@ USEMODULE += netdev_legacy_api
 USEMODULE += ztimer_msec
 
 USEMODULE += lora
+
+CFLAGS += -DSX127X_RADIO_HAL=1
+USEMODULE += netdev_ieee802154_submac

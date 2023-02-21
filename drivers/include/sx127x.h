@@ -65,7 +65,7 @@
 #include "net/netdev.h"
 #include "periph/gpio.h"
 #include "periph/spi.h"
-
+#include "net/ieee802154/radio.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -244,6 +244,20 @@ typedef struct {
     sx127x_params_t params;             /**< Device driver parameters */
     sx127x_internal_t _internal;        /**< Internal sx127x data used within the driver */
     sx127x_flags_t irq;                 /**< Device IRQ flags */
+
+    bool ifs        : 1;    /**< if true, the device is currently inside the IFS period */
+    bool cca_send   : 1;    /**< whether the next transmission uses CCA or not */
+    bool ack_filter : 1;    /**< whether the ACK filter is activated or not */
+    bool promisc    : 1;    /**< whether the device is in promiscuous mode or not */
+    bool pending    : 1;    /**< whether there pending bit should be set in the ACK frame or not */
+    bool cad_detected;   
+
+    ztimer_t ack_timer;
+    uint8_t seq_num;
+    uint8_t size;
+    uint8_t short_addr[IEEE802154_SHORT_ADDRESS_LEN];    /**< Short (2 bytes) device address */
+    uint8_t long_addr[IEEE802154_LONG_ADDRESS_LEN];     /**< Long (8 bytes) device address */
+    uint16_t pan_id; 
 } sx127x_t;
 
 /**
@@ -260,7 +274,7 @@ typedef void (sx127x_dio_irq_handler_t)(sx127x_t *dev);
  *                                     If initialized manually, pass a unique identifier instead.
  */
 void sx127x_setup(sx127x_t *dev, const sx127x_params_t *params, uint8_t index);
-
+void sx127x_hal_setup(sx127x_t *dev, ieee802154_dev_t *hal);
 /**
  * @brief   Resets the SX127X
  *
