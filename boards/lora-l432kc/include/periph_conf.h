@@ -62,7 +62,7 @@ static const uart_conf_t uart_config[] = {
 
 #define EN_POW_RF_PIN_NUM           5
 #define EN_POW_RF_PORT_NUM          PORT_A
-#define EN_POW_CPU_PIN_NUM          13
+#define EN_POW_CPU_PIN_NUM          15
 #define EN_POW_CPU_PORT_NUM         PORT_C
 #define EN_POW_ANTS_PIN_NUM         15
 #define EN_POW_ANTS_PORT_NUM        PORT_A

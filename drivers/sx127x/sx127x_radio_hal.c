@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 #include "net/ieee802154/radio.h"
@@ -36,7 +36,7 @@
 #include "periph/dac.h"
 #include "sx127x_registers.h"
 #include "sx127x_internal.h"
-#include "sx127x_netdev.h"
+//#include "sx127x_netdev.h"
 #include "sx127x.h"
 
 #define LORA_ACK_REPLY_US           1024
@@ -154,10 +154,12 @@ static int _write(ieee802154_dev_t *hal, const iolist_t *iolist){
 
 static int _request_op(ieee802154_dev_t *hal, ieee802154_hal_op_t op, void *ctx){
     sx127x_t *dev = hal->priv;
+    
     (void)dev;
     (void)ctx;
     switch (op) {
         case IEEE802154_HAL_OP_TRANSMIT:
+        dac_set(DAC_LINE(0), 56000U);
             sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGSMASK,
                          SX127X_RF_LORA_IRQFLAGS_RXTIMEOUT |
                          SX127X_RF_LORA_IRQFLAGS_RXDONE |
@@ -175,11 +177,13 @@ static int _request_op(ieee802154_dev_t *hal, ieee802154_hal_op_t op, void *ctx)
                          SX127X_RF_LORA_DIOMAPPING1_DIO0_01);
 
             sx127x_set_state(dev, SX127X_RF_TX_RUNNING);
+            
             /* Put chip into transfer mode */
             sx127x_set_op_mode(dev, SX127X_RF_OPMODE_TRANSMITTER );
         break;
         case IEEE802154_HAL_OP_SET_RX:
             sx127x_set_rx_timeout(dev, 0);
+            dac_set(DAC_LINE(0), 0U);
             sx127x_set_rx(dev);
         break;
 
@@ -348,7 +352,7 @@ static int _confirm_on(ieee802154_dev_t *hal)
 {
     (void)hal;
 
-    return -ENOTSUP;
+    return 0;
 }
 
 static int _set_cca_mode(ieee802154_dev_t *hal, ieee802154_cca_mode_t mode)

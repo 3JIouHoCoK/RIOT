@@ -57,6 +57,16 @@ static bhp_event_t kw2xrf_bhp[KW2XRF_NUM];
 static sx126x_t sx126x_devs[SX126X_NUMOF];
 #endif
 
+#ifdef MODULE_SX127X
+#include "sx127x.h"
+#include "sx127x_params.h"
+
+#define SX127X_NUMOF                ARRAY_SIZE(sx127x_params)
+
+static sx127x_t sx127x_devs[SX127X_NUMOF];
+
+#endif
+
 void ieee802154_hal_test_init_devs(ieee802154_dev_cb_t cb, void *opaque)
 {
     /* Call the init function of the device (this should be handled by
@@ -103,6 +113,17 @@ void ieee802154_hal_test_init_devs(ieee802154_dev_cb_t cb, void *opaque)
         sx126x_hal_setup(&sx126x_devs[i], radio);
         sx126x_init(&sx126x_devs[i], &sx126x_params[i]);
         sx126x_setup(radio,  i);
+        }
+    };
+#endif
+
+#ifdef MODULE_SX127X
+    if((radio = cb(IEEE802154_DEV_TYPE_SX127X, opaque))){
+        for (unsigned i = 0; i < SX127X_NUMOF; ++i) {
+        sx127x_hal_setup(&sx127x_devs[i], radio);
+        sx127x_setup(&sx127x_devs[i], &sx127x_params[i], i); 
+        sx127x_init(&sx127x_devs[i], radio);
+               
         }
     };
 #endif

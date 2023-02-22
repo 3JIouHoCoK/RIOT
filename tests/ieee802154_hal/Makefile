@@ -19,9 +19,10 @@ BOARD_WHITELIST :=  \
 					pba-d-01-kw2x \
 					rak3172 \
           lora2w \
+          lora-l432kc \
 					#
 
-DISABLE_MODULE += auto_init_at86rf2xx auto_init_nrf802154 auto_init_sx126x
+DISABLE_MODULE += auto_init_at86rf2xx auto_init_nrf802154 auto_init_sx126x auto_init_sx127x
 
 ifeq ($(BOARD), native)
   ZEP_PORT_BASE ?= 17754

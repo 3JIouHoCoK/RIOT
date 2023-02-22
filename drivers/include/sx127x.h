@@ -289,7 +289,7 @@ int sx127x_reset(const sx127x_t *dev);
  *
  * @return result of initialization
  */
-int sx127x_init(sx127x_t *dev);
+int sx127x_init(sx127x_t *dev, ieee802154_dev_t *hal);
 
 /**
  * @brief   Initialize radio settings with default values

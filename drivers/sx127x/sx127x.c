@@ -39,7 +39,7 @@
 #include "sx127x.h"
 #include "sx127x_internal.h"
 #include "sx127x_registers.h"
-#include "sx127x_netdev.h"
+//#include "sx127x_netdev.h"
 
 #define ENABLE_DEBUG 1
 #include "debug.h"
@@ -62,10 +62,7 @@
 
 /* Internal functions */
 static int _init_spi(sx127x_t *dev);
-static int _init_gpios(sx127x_t *dev);
-static void _init_timers(sx127x_t *dev);
-static void _on_tx_timeout(void *arg);
-static void _on_rx_timeout(void *arg);
+static int _init_gpios(sx127x_t *dev,  ieee802154_dev_t *hal);
 
 /* SX127X DIO interrupt handlers initialization */
 static void sx127x_on_dio0_isr(void *arg);
@@ -73,6 +70,7 @@ static void sx127x_on_dio1_isr(void *arg);
 static void sx127x_on_dio2_isr(void *arg);
 static void sx127x_on_dio3_isr(void *arg);
 
+extern void sx127x_hal_task_handler(ieee802154_dev_t *hal);
 void sx127x_setup(sx127x_t *dev, const sx127x_params_t *params, uint8_t index)
 {
 #ifdef SX127X_RADIO_HAL
@@ -137,7 +135,7 @@ int sx127x_reset(const sx127x_t *dev)
     return 0;
 }
 
-int sx127x_init(sx127x_t *dev)
+int sx127x_init(sx127x_t *dev, ieee802154_dev_t *hal)
 {
     gpio_init(GPIO_PIN(EN_POW_RF_PORT_NUM, EN_POW_RF_PIN_NUM), GPIO_OUT);
     gpio_set(GPIO_PIN(EN_POW_RF_PORT_NUM, EN_POW_RF_PIN_NUM));
@@ -153,8 +151,6 @@ int sx127x_init(sx127x_t *dev)
         DEBUG("[sx127x] error: no valid device found\n");
         return -SX127X_ERR_NODEV;
     }
-
-    _init_timers(dev);
 
     if (gpio_is_valid(dev->params.reset_pin)) {
         /* reset pin should be left floating during POR */
@@ -175,20 +171,22 @@ int sx127x_init(sx127x_t *dev)
 #endif
     sx127x_set_op_mode(dev, SX127X_RF_OPMODE_SLEEP);
 
-    if (_init_gpios(dev) < 0) {
+    if (_init_gpios(dev, hal) < 0) {
         DEBUG("[sx127x] error: failed to initialize GPIOs\n");
         return -SX127X_ERR_GPIOS;
     }
-
+sx127x_init_radio_settings(dev);
     return SX127X_INIT_OK;
 }
 
 void sx127x_init_radio_settings(sx127x_t *dev)
 {
-    sx127x_reg_write(dev, SX127X_REG_TCXO, 0x19);
     DEBUG("[sx127x] initializing radio settings\n");
+    
     sx127x_set_channel(dev, SX127X_CHANNEL_DEFAULT);
     sx127x_set_modem(dev, SX127X_MODEM_DEFAULT);
+    uint8_t tcxo_reg = sx127x_reg_read(dev, SX127X_REG_TCXO);
+    sx127x_reg_write(dev, SX127X_REG_TCXO, (tcxo_reg | SX127X_RF_LORA_TCXO_TCXOINPUT_ON));
     sx127x_set_tx_power(dev, SX127X_RADIO_TX_POWER);
     sx127x_set_bandwidth(dev, CONFIG_LORA_BW_DEFAULT);
     sx127x_set_spreading_factor(dev, CONFIG_LORA_SF_DEFAULT);
@@ -237,49 +235,47 @@ uint32_t sx127x_random(sx127x_t *dev)
     return rnd;
 }
 
-/**
- * IRQ handlers
- */
-void sx127x_isr(netdev_t *dev)
-{
-    netdev_trigger_event_isr(dev);
-}
 
-static void sx127x_on_dio_isr(sx127x_t *dev, sx127x_flags_t flag)
+static void sx127x_on_dio_isr(ieee802154_dev_t *hal, sx127x_flags_t flag)
 {
+    sx127x_t *dev = hal->priv;
     dev->irq |= flag;
-    sx127x_isr(&dev->netdev);
+    sx127x_hal_task_handler(hal);
 }
 
 static void sx127x_on_dio0_isr(void *arg)
 {
-    sx127x_on_dio_isr(arg, SX127X_IRQ_DIO0);
+    ieee802154_dev_t *hal = arg;
+    sx127x_on_dio_isr(hal, SX127X_IRQ_DIO0);
 }
 
 static void sx127x_on_dio1_isr(void *arg)
 {
-    sx127x_on_dio_isr(arg, SX127X_IRQ_DIO1);
+    ieee802154_dev_t *hal = arg;
+    sx127x_on_dio_isr(hal, SX127X_IRQ_DIO1);
 }
 
 static void sx127x_on_dio2_isr(void *arg)
 {
-    sx127x_on_dio_isr(arg, SX127X_IRQ_DIO2);
+    ieee802154_dev_t *hal = arg;
+    sx127x_on_dio_isr(hal, SX127X_IRQ_DIO2);
 }
 
 static void sx127x_on_dio3_isr(void *arg)
 {
-    sx127x_on_dio_isr(arg, SX127X_IRQ_DIO3);
+    ieee802154_dev_t *hal = arg;
+    sx127x_on_dio_isr(hal, SX127X_IRQ_DIO3);
 }
 
 /* Internal event handlers */
-static int _init_gpios(sx127x_t *dev)
+static int _init_gpios(sx127x_t *dev,  ieee802154_dev_t *hal)
 {
     int res;
 
     /* Check if DIO0 pin is defined */
     if (gpio_is_valid(dev->params.dio0_pin)) {
         res = gpio_init_int(dev->params.dio0_pin, SX127X_DIO_PULL_MODE,
-                            GPIO_FALLING, sx127x_on_dio0_isr, dev);
+                            GPIO_FALLING, sx127x_on_dio0_isr, hal);
         if (res < 0) {
             DEBUG("[sx127x] error: failed to initialize DIO0 pin\n");
             return res;
@@ -294,7 +290,7 @@ static int _init_gpios(sx127x_t *dev)
     /* Check if DIO1 pin is defined */
     if (gpio_is_valid(dev->params.dio1_pin)) {
         res = gpio_init_int(dev->params.dio1_pin, SX127X_DIO_PULL_MODE,
-                            GPIO_FALLING, sx127x_on_dio1_isr, dev);
+                            GPIO_FALLING, sx127x_on_dio1_isr, hal);
         if (res < 0) {
             DEBUG("[sx127x] error: failed to initialize DIO1 pin\n");
             return res;
@@ -304,7 +300,7 @@ static int _init_gpios(sx127x_t *dev)
     /* check if DIO2 pin is defined */
     if (gpio_is_valid(dev->params.dio2_pin)) {
         res = gpio_init_int(dev->params.dio2_pin, SX127X_DIO_PULL_MODE,
-                            GPIO_RISING, sx127x_on_dio2_isr, dev);
+                            GPIO_RISING, sx127x_on_dio2_isr, hal);
         if (res < 0) {
             DEBUG("[sx127x] error: failed to initialize DIO2 pin\n");
             return res;
@@ -318,7 +314,7 @@ static int _init_gpios(sx127x_t *dev)
     /* check if DIO3 pin is defined */
     if (gpio_is_valid(dev->params.dio3_pin)) {
         res = gpio_init_int(dev->params.dio3_pin, SX127X_DIO_PULL_MODE,
-                            GPIO_RISING, sx127x_on_dio3_isr, dev);
+                            GPIO_RISING, sx127x_on_dio3_isr, hal);
         if (res < 0) {
             DEBUG("[sx127x] error: failed to initialize DIO3 pin\n");
             return res;
@@ -326,29 +322,6 @@ static int _init_gpios(sx127x_t *dev)
     }
 
     return res;
-}
-
-static void _on_tx_timeout(void *arg)
-{
-    netdev_t *dev = arg;
-
-    dev->event_callback(dev, NETDEV_EVENT_TX_TIMEOUT);
-}
-
-static void _on_rx_timeout(void *arg)
-{
-    netdev_t *dev = arg;
-
-    dev->event_callback(dev, NETDEV_EVENT_RX_TIMEOUT);
-}
-
-static void _init_timers(sx127x_t *dev)
-{
-    dev->_internal.tx_timeout_timer.arg = dev;
-    dev->_internal.tx_timeout_timer.callback = _on_tx_timeout;
-
-    dev->_internal.rx_timeout_timer.arg = dev;
-    dev->_internal.rx_timeout_timer.callback = _on_rx_timeout;
 }
 
 static int _init_spi(sx127x_t *dev)

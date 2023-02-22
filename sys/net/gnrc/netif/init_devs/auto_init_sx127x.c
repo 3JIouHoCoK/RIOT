@@ -65,7 +65,7 @@ void auto_init_sx127x(void)
         netdev_ieee802154_submac_init(&sx127x_netdev[i]);
         
         sx127x_hal_setup(&sx127x_devs[i], &sx127x_netdev[i].submac.dev);
-        sx127x_init(&sx127x_devs[i]);
+        sx127x_init(&sx127x_devs[i], &sx127x_netdev[i].submac.dev);
         sx127x_setup(&sx127x_devs[i], &sx127x_params[i], i);
         
             gnrc_netif_ieee802154_create(&_netif[i], sx127x_stacks[i],

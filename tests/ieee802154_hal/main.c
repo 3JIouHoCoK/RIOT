@@ -31,7 +31,7 @@
 #include "net/l2util.h"
 #include "net/ieee802154.h"
 #include "net/ieee802154/radio.h"
-
+#include "periph/gpio.h"
 #include "shell.h"
 
 #include "test_utils/expect.h"
@@ -270,6 +270,9 @@ static ieee802154_dev_t *_reg_callback(ieee802154_dev_type_t type, void *opaque)
         case IEEE802154_DEV_TYPE_SX126X:
             printf("sx126x");
             break;
+        case IEEE802154_DEV_TYPE_SX127X:
+            printf("sx127x");
+            break;
     }
 
     puts(".");
@@ -296,17 +299,13 @@ static int _init(void)
      * already have a copy of the address */
     luid_get_eui64(&ext_addr);
     luid_get_short(&short_addr);
-
     /* Since the device was already initialized, turn on the radio.
      * The transceiver state will be "TRX_OFF" */
     res = ieee802154_radio_request_on(&_radio[0]);
     expect(res >= 0);
     while(ieee802154_radio_confirm_on(&_radio[0]) == -EAGAIN) {}
-
     ieee802154_radio_set_frame_filter_mode(&_radio[0], IEEE802154_FILTER_ACCEPT);
-
     uint16_t panid = CONFIG_IEEE802154_DEFAULT_PANID;
-
     /* Set all IEEE addresses */
     res = ieee802154_radio_config_addr_filter(&_radio[0],
                                         IEEE802154_AF_SHORT_ADDR, &short_addr);
@@ -323,7 +322,6 @@ static int _init(void)
 
     res = ieee802154_radio_config_phy(&_radio[0], &conf);
     expect(res >= 0);
-
     /* ieee802154_radio_set_cca_mode*/
     res = ieee802154_radio_set_cca_mode(&_radio[0], IEEE802154_CCA_MODE_ED_THRESHOLD);
     expect(res >= 0);
@@ -738,6 +736,8 @@ int main(void)
 {
     mutex_init(&lock);
     mutex_lock(&lock);
+    gpio_init(GPIO_PIN(EN_POW_CPU_PORT_NUM, EN_POW_CPU_PIN_NUM), GPIO_OUT);
+    gpio_set(GPIO_PIN(EN_POW_CPU_PORT_NUM, EN_POW_CPU_PIN_NUM));
     _init();
 
     /* start the shell */

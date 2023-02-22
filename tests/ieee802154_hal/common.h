@@ -29,7 +29,8 @@
                      IS_USED(MODULE_NRF802154) + \
                      SOCKET_ZEP_MAX + \
                      IS_USED(MODULE_KW2XRF) + \
-                     IS_USED(MODULE_SX126X)
+                     IS_USED(MODULE_SX126X) + \
+                     IS_USED(MODULE_SX127X)
 
 #if RADIOS_NUMOF == 0
 #error "Radio is not supported"
@@ -49,7 +50,8 @@ typedef enum {
     IEEE802154_DEV_TYPE_NRF802154,
     IEEE802154_DEV_TYPE_SOCKET_ZEP,
     IEEE802154_DEV_TYPE_KW2XRF,
-    IEEE802154_DEV_TYPE_SX126X
+    IEEE802154_DEV_TYPE_SX126X,
+    IEEE802154_DEV_TYPE_SX127X
 } ieee802154_dev_type_t;
 
 typedef ieee802154_dev_t* (*ieee802154_dev_cb_t)(ieee802154_dev_type_t type,

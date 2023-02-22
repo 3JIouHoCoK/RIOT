@@ -17,7 +17,8 @@
         "initializer_list": "c",
         "ranges": "c",
         "utility": "c",
-        "radio.h": "c"
+        "radio.h": "c",
+        "shell.h": "c"
     },
     "[shellscript][c][cpp]": {
         "editor.tabSize": 4,
