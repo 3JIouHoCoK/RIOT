@@ -20,6 +20,7 @@ BOARD_WHITELIST :=  \
 					rak3172 \
           lora2w \
           lora-l432kc \
+          weact-f411ce \
 					#
 
 DISABLE_MODULE += auto_init_at86rf2xx auto_init_nrf802154 auto_init_sx126x auto_init_sx127x

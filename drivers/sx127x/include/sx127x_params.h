@@ -37,19 +37,19 @@ extern "C" {
 #endif
 
 #ifndef SX127X_PARAM_SPI_NSS
-#define SX127X_PARAM_SPI_NSS                GPIO_PIN(SPI_CS_TR1_PORT_NUM, SPI_CS_TR1_PIN_NUM)       /* D10 */
+#define SX127X_PARAM_SPI_NSS                GPIO_PIN(PORT_B, 0)       /* D10 */
 #endif
 
 #ifndef SX127X_PARAM_RESET
-#define SX127X_PARAM_RESET                  GPIO_UNDEF       /* A0 */
+#define SX127X_PARAM_RESET                  GPIO_PIN(PORT_A, 12)       /* A0 */
 #endif
 
 #ifndef SX127X_PARAM_DIO0
-#define SX127X_PARAM_DIO0                   GPIO_PIN(INT_TR1_PORT_NUM, INT_TR1_PIN_NUM)      /* D2 */
+#define SX127X_PARAM_DIO0                   GPIO_PIN(PORT_A, 15)      /* D2 */
 #endif
 
 #ifndef SX127X_PARAM_DIO1
-#define SX127X_PARAM_DIO1                  GPIO_UNDEF       /* D3 */
+#define SX127X_PARAM_DIO1                  GPIO_PIN(PORT_B, 3)       /* D3 */
 #endif
 
 #ifndef SX127X_PARAM_DIO2
@@ -71,44 +71,6 @@ extern "C" {
 #ifndef SX127X_PARAM_RX_SWITCH
 #define SX127X_PARAM_RX_SWITCH              GPIO_UNDEF
 #endif
-
-/* SECOND SX1278 Module */
-#ifndef SX127X_PARAM_SPI_NSS_2
-#define SX127X_PARAM_SPI_NSS_2               GPIO_PIN(SPI_CS_R2_PORT_NUM, SPI_CS_R2_PIN_NUM)       /* D10 */
-#endif
-
-#ifndef SX127X_PARAM_RESET_2
-#define SX127X_PARAM_RESET_2                  GPIO_UNDEF       /* A0 */
-#endif
-
-#ifndef SX127X_PARAM_DIO0_2
-#define SX127X_PARAM_DIO0_2                  GPIO_PIN(INT_R2_PORT_NUM, INT_R2_PIN_NUM)      /* D2 */
-#endif
-
-#ifndef SX127X_PARAM_DIO1_2
-#define SX127X_PARAM_DIO1_2                   GPIO_PIN(INT_R2_PORT_NUM, INT_R2_PIN_NUM)       /* D3 */
-#endif
-
-#ifndef SX127X_PARAM_DIO2_2
-#define SX127X_PARAM_DIO2_2                   GPIO_UNDEF       /* D4 */
-#endif
-
-#ifndef SX127X_PARAM_DIO3_2
-#define SX127X_PARAM_DIO3_2                   GPIO_UNDEF       /* D5 */
-#endif
-
-#ifndef SX127X_PARAM_PASELECT_2
-#define SX127X_PARAM_PASELECT_2               (SX127X_PA_RFO)
-#endif
-
-#ifndef SX127X_PARAM_TX_SWITCH_2
-#define SX127X_PARAM_TX_SWITCH_2             GPIO_UNDEF
-#endif
-
-#ifndef SX127X_PARAM_RX_SWITCH_2
-#define SX127X_PARAM_RX_SWITCH_2              GPIO_UNDEF
-#endif
-
 
 #ifndef SX127X_PARAMS
 #if defined(SX127X_USE_TX_SWITCH) || defined(SX127X_USE_RX_SWITCH)

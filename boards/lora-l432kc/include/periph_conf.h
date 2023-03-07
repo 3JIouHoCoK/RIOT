@@ -77,6 +77,16 @@ static const uart_conf_t uart_config[] = {
 #define INT_TR1_PORT_NUM            PORT_A
 #define INT_R2_PIN_NUM              13
 #define INT_R2_PORT_NUM             PORT_A
+
+#define SX127X_PARAM_SPI_NSS                GPIO_PIN(SPI_CS_TR1_PORT_NUM, SPI_CS_TR1_PIN_NUM)
+#define SX127X_PARAM_DIO0                   GPIO_PIN(INT_TR1_PORT_NUM, INT_TR1_PIN_NUM)
+#define SX127X_PARAM_RESET                  GPIO_UNDEF
+#define SX127X_PARAM_DIO1                  GPIO_UNDEF
+#define SX127X_PARAM_DIO2                   GPIO_UNDEF
+#define SX127X_PARAM_DIO3                   GPIO_UNDEF
+#define SX127X_PARAM_PASELECT               (SX127X_PA_RFO)
+#define SX127X_PARAM_TX_SWITCH              GPIO_UNDEF
+#define SX127X_PARAM_RX_SWITCH              GPIO_UNDEF
 /**
  * @name   SPI configuration
  * @{

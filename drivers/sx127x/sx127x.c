@@ -41,7 +41,7 @@
 #include "sx127x_registers.h"
 //#include "sx127x_netdev.h"
 
-#define ENABLE_DEBUG 1
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /* The reset signal must be applied for at least 100 µs to trigger the manual
@@ -169,8 +169,8 @@ int sx127x_init(sx127x_t *dev, ieee802154_dev_t *hal)
 #if defined(MODULE_SX1276)
     sx1276_rx_chain_calibration(dev);
 #endif
-    sx127x_set_op_mode(dev, SX127X_RF_OPMODE_SLEEP);
-
+    //sx127x_set_op_mode(dev, SX127X_RF_OPMODE_SLEEP);
+sx127x_set_standby(dev);
     if (_init_gpios(dev, hal) < 0) {
         DEBUG("[sx127x] error: failed to initialize GPIOs\n");
         return -SX127X_ERR_GPIOS;
@@ -347,5 +347,6 @@ static int _init_spi(sx127x_t *dev)
     }
 
     DEBUG("[sx127x] SPI_%i initialized with success\n", dev->params.spi);
+    ztimer_sleep(ZTIMER_MSEC, 10);
     return 0;
 }

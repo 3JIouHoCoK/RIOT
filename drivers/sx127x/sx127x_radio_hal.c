@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#define ENABLE_DEBUG 1
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #include "net/ieee802154/radio.h"
@@ -64,7 +64,6 @@
 
 
 static const ieee802154_radio_ops_t sx127x_ops;
-static ieee802154_dev_t *_sx127x_hal_dev;
 
 
 void sx127x_hal_setup(sx127x_t *dev, ieee802154_dev_t *hal)
@@ -75,8 +74,6 @@ void sx127x_hal_setup(sx127x_t *dev, ieee802154_dev_t *hal)
     dev->ack_timer.arg = dev;
     //dev->ack_timer.callback = ack_timer_cb;
     dev->ack_filter = false;
-
-    _sx127x_hal_dev = hal;
 }
 
 void _on_dio0_irq(ieee802154_dev_t *hal, volatile uint8_t interruptReg)
@@ -193,11 +190,13 @@ static int _request_op(ieee802154_dev_t *hal, ieee802154_hal_op_t op, void *ctx)
 
         case IEEE802154_HAL_OP_CCA:
             sx127x_set_standby(dev);
-            sx127x_start_cad(dev);
+            //sx127x_start_cad(dev);
+            hal->cb(hal, IEEE802154_RADIO_CONFIRM_CCA); //КОСТЫЛЬ!
         break;
 
         default:
-        assert(false);
+            DEBUG("Wrong request, assertion\n");
+            assert(false);
         break;
 
     }
@@ -216,8 +215,7 @@ switch (op){
        if (info) {
             info->status = (dev->cad_detected) ? TX_STATUS_MEDIUM_BUSY : TX_STATUS_SUCCESS;
         }
-
-        
+        ztimer_sleep(ZTIMER_USEC, 1024);
     break;
 
     case IEEE802154_HAL_OP_SET_RX:

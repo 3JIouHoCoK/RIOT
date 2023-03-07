@@ -1,5 +1,8 @@
 include $(RIOTBOARD)/common/nucleo32/Makefile.dep
 ifneq (,$(filter netdev_default,$(USEMODULE)))
-  USEMODULE += sx127x
+  USEMODULE += sx1276
+endif
+ifneq (,$(filter ieee802154,$(USEMODULE)))
+  USEMODULE += ieee802154_submac
 endif
 
