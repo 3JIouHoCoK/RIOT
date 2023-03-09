@@ -50,49 +50,27 @@ static sx127x_t sx127x_devs[SX127X_NUMOF];
 static char sx127x_stacks[SX127X_NUMOF][SX127X_STACKSIZE];
 static gnrc_netif_t _netif[SX127X_NUMOF];
 
-#if defined(SX127X_RADIO_HAL)
 #include "net/netdev/ieee802154_submac.h"
 #include "net/gnrc/netif/ieee802154.h"
 static netdev_ieee802154_submac_t sx127x_netdev[SX127X_NUMOF];
-#endif
+
 
 void auto_init_sx127x(void)
 {
     for (unsigned i = 0; i < SX127X_NUMOF; ++i) {
-#if defined(SX127X_RADIO_HAL)
     LOG_DEBUG("[auto_init_netif] initializing sx1276 hal #%u\n", i);
         netdev_register(&sx127x_netdev[i].dev.netdev, NETDEV_SX127X, i);
         netdev_ieee802154_submac_init(&sx127x_netdev[i]);
         
         sx127x_hal_setup(&sx127x_devs[i], &sx127x_netdev[i].submac.dev);
-        sx127x_init(&sx127x_devs[i], &sx127x_netdev[i].submac.dev);
         sx127x_setup(&sx127x_devs[i], &sx127x_params[i], i);
+        sx127x_init(&sx127x_devs[i], &sx127x_netdev[i].submac.dev);
+        
         
             gnrc_netif_ieee802154_create(&_netif[i], sx127x_stacks[i],
                                   SX127X_STACKSIZE, SX127X_PRIO,
                                   "sx127x", &sx127x_netdev[i].dev.netdev);
-#else
-    #if defined(MODULE_SX1272)
-        LOG_DEBUG("[auto_init_netif] initializing sx1272 #%u\n", i);
-    #else /* MODULE_SX1276 */
-        LOG_DEBUG("[auto_init_netif] initializing sx1276 #%u\n", i);
-#endif
 
-        sx127x_setup(&sx127x_devs[i], &sx127x_params[i], i);
-        if (IS_USED(MODULE_GNRC_NETIF_LORAWAN)) {
-            /* Currently only one lora device is supported */
-            assert(SX127X_NUMOF == 1);
-
-            gnrc_netif_lorawan_create(&_netif[i], sx127x_stacks[i],
-                                      SX127X_STACKSIZE, SX127X_PRIO,
-                                      "sx127x", &sx127x_devs[i].netdev);
-        }
-        else {
-            gnrc_netif_raw_create(&_netif[i], sx127x_stacks[i],
-                                  SX127X_STACKSIZE, SX127X_PRIO,
-                                  "sx127x", &sx127x_devs[i].netdev);
-        }
-#endif
     }
 }
 /** @} */

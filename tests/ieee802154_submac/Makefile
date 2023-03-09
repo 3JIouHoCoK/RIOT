@@ -18,7 +18,9 @@ BOARD_WHITELIST :=  \
 					remote-revb \
 					pba-d-01-kw2x \
           rak3172 \
+          lora-l432kc \
 					#
+
 USEMODULE += od
 USEMODULE += shell
 USEMODULE += shell_cmds_default
