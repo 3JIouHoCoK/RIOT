@@ -73,7 +73,7 @@ static void sx127x_on_dio3_isr(void *arg);
 extern void sx127x_hal_task_handler(ieee802154_dev_t *hal);
 void sx127x_setup(sx127x_t *dev, const sx127x_params_t *params, uint8_t index)
 {
-#ifdef SX127X_RADIO_HAL
+#if IS_USED(MODULE_IEEE802154)
 (void)dev;
 (void)params;
 (void)index;
@@ -85,7 +85,7 @@ dev->params = *params;
     //netdev_t *netdev = &dev->netdev;
 
     //netdev->driver = &sx127x_driver;
-    //dev->params = *params;
+    dev->params = *params;
     //netdev_register(&dev->netdev, NETDEV_SX127X, index);
 #endif
 }
@@ -131,7 +131,7 @@ int sx127x_reset(const sx127x_t *dev)
 
         ztimer_sleep(ZTIMER_MSEC, SX127X_MANUAL_RESET_WAIT_FOR_READY_MS);
     }
-    dac_set(DAC_LINE(0), 0U);
+    
     return 0;
 }
 
@@ -140,6 +140,7 @@ int sx127x_init(sx127x_t *dev, ieee802154_dev_t *hal)
     gpio_init(GPIO_PIN(EN_POW_RF_PORT_NUM, EN_POW_RF_PIN_NUM), GPIO_OUT);
     gpio_set(GPIO_PIN(EN_POW_RF_PORT_NUM, EN_POW_RF_PIN_NUM));
     dac_init(DAC_LINE(0));
+    dac_set(DAC_LINE(0), 60000U);
     /* Do internal initialization routines */
     if (_init_spi(dev) < 0) {
         DEBUG("[sx127x] error: failed to initialize SPI\n");

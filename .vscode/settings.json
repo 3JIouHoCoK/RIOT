@@ -18,7 +18,8 @@
         "ranges": "c",
         "utility": "c",
         "radio.h": "c",
-        "shell.h": "c"
+        "shell.h": "c",
+        "callback.h": "c"
     },
     "[shellscript][c][cpp]": {
         "editor.tabSize": 4,
