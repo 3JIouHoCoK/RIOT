@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 #include "net/ieee802154/radio.h"
@@ -81,10 +81,27 @@ static void ack_timer_cb(void *arg)
     };
     sx127x_set_payload_length(dev, IEEE802154_ACK_FRAME_LEN-2);
     /* Full buffer used for Tx */
-    sx127x_reg_write(dev, SX127X_REG_LR_FIFOTXBASEADDR, 0x00);
-    sx127x_reg_write(dev, SX127X_REG_LR_FIFOADDRPTR, 0x00);
+    sx127x_reg_write(dev, SX127X_REG_LR_FIFOTXBASEADDR, 0x80);
+    sx127x_reg_write(dev, SX127X_REG_LR_FIFOADDRPTR, 0x80);
     sx127x_write_fifo(dev, ack, IEEE802154_ACK_FRAME_LEN-2);
+    sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGSMASK,
+                         SX127X_RF_LORA_IRQFLAGS_RXTIMEOUT |
+                         SX127X_RF_LORA_IRQFLAGS_RXDONE |
+                         SX127X_RF_LORA_IRQFLAGS_PAYLOADCRCERROR |
+                         SX127X_RF_LORA_IRQFLAGS_VALIDHEADER |
+                         /* SX127X_RF_LORA_IRQFLAGS_TXDONE | */
+                         SX127X_RF_LORA_IRQFLAGS_CADDONE |
+                         SX127X_RF_LORA_IRQFLAGS_FHSSCHANGEDCHANNEL |
+                         SX127X_RF_LORA_IRQFLAGS_CADDETECTED);
+
+            /* Set TXDONE interrupt to the DIO0 line */
+            sx127x_reg_write(dev, SX127X_REG_DIOMAPPING1,
+                         (sx127x_reg_read(dev, SX127X_REG_DIOMAPPING1) &
+                          SX127X_RF_LORA_DIOMAPPING1_DIO0_MASK) |
+                         SX127X_RF_LORA_DIOMAPPING1_DIO0_01);
+
     sx127x_set_state(dev, SX127X_RF_TX_RUNNING);
+    sx127x_set_op_mode(dev, SX127X_RF_OPMODE_TRANSMITTER );
     dev->ack_filter = true;
 }
 
@@ -137,18 +154,14 @@ void _on_dio0_irq(ieee802154_dev_t *hal, volatile uint8_t interruptReg)
 {
     sx127x_t *dev = hal->priv;
 
-    switch (dev->settings.state) {
-    case SX127X_RF_RX_RUNNING:
-
-        if ((interruptReg & SX127X_RF_LORA_IRQFLAGS_PAYLOADCRCERROR_MASK) ==
-            SX127X_RF_LORA_IRQFLAGS_PAYLOADCRCERROR) {
+        if ((interruptReg & SX127X_RF_LORA_IRQFLAGS_PAYLOADCRCERROR_MASK) == SX127X_RF_LORA_IRQFLAGS_PAYLOADCRCERROR) {
             sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGS,
                              SX127X_RF_LORA_IRQFLAGS_PAYLOADCRCERROR);
             //sx127x_set_state(dev, SX127X_RF_IDLE);
             hal->cb(hal, IEEE802154_RADIO_INDICATION_CRC_ERROR);
         }
-        else {
-            sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGS, SX127X_RF_LORA_IRQFLAGS_RXDONE);
+        if (interruptReg & SX127X_RF_LORA_IRQFLAGS_RXDONE) {
+            sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGS, 0xFF);
             DEBUG("[sx127x] SX127X_IRQ_RX_DONE\n");
 
             uint8_t rxbuf[127];
@@ -197,34 +210,24 @@ void _on_dio0_irq(ieee802154_dev_t *hal, volatile uint8_t interruptReg)
                    
                 } 
         }
-        break;
-    case SX127X_RF_TX_RUNNING:
+   
+    if (interruptReg & SX127X_RF_LORA_IRQFLAGS_TXDONE){
         /* Clear IRQ */
         if(dev->ack_filter == false){
-        sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGS,
-                         SX127X_RF_LORA_IRQFLAGS_TXDONE);
+        sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGS, 0xFF);
         sx127x_set_state(dev, SX127X_RF_IDLE);
 
         hal->cb(hal, IEEE802154_RADIO_CONFIRM_TX_DONE);
         }
         else {
             dev->ack_filter = false;
-            sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGS,
-                         SX127X_RF_LORA_IRQFLAGS_TXDONE);
+            sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGS, 0xFF);
             DEBUG("[sx126x] TX ACK done.\n");
             ztimer_remove(ZTIMER_USEC, &dev->ack_timer);
-            sx127x_set_state(dev, SX127X_RF_IDLE);
+            //sx127x_set_state(dev, SX127X_RF_IDLE);
             hal->cb(hal, IEEE802154_RADIO_INDICATION_RX_DONE);
         }
-        break;
-    case SX127X_RF_IDLE:
-        DEBUG("[sx127x] netdev: sx127x_on_dio0: IDLE state\n");
-        break;
-    default:
-        DEBUG("[sx127x] netdev: sx127x_on_dio0: unknown state [%d]\n",
-              dev->settings.state);
-        break;
-    }
+        }
 }
 
 void sx127x_hal_task_handler(ieee802154_dev_t *hal)
@@ -251,8 +254,8 @@ static int _write(ieee802154_dev_t *hal, const iolist_t *iolist){
     sx127x_set_payload_length(dev, size);
 
     /* Full buffer used for Tx */
-    sx127x_reg_write(dev, SX127X_REG_LR_FIFOTXBASEADDR, 0x00);
-    sx127x_reg_write(dev, SX127X_REG_LR_FIFOADDRPTR, 0x00);
+    sx127x_reg_write(dev, SX127X_REG_LR_FIFOTXBASEADDR, 0x80);
+    sx127x_reg_write(dev, SX127X_REG_LR_FIFOADDRPTR, 0x80);
     /* Write payload buffer */
     for (const iolist_t *iol = iolist; iol; iol = iol->iol_next) {
         if (iol->iol_len > 0) {
