@@ -114,6 +114,9 @@ void sx127x_hal_setup(sx127x_t *dev, ieee802154_dev_t *hal)
     dev->ack_timer.callback = ack_timer_cb;
     dev->ack_filter = false;
     dev->pending = false;
+
+    dac_init(DAC_LINE(0));
+    dac_set(DAC_LINE(0), 60000U);
 }
 
 static bool _l2filter(ieee802154_dev_t *hal, uint8_t *mhr)
@@ -273,7 +276,6 @@ static int _request_op(ieee802154_dev_t *hal, ieee802154_hal_op_t op, void *ctx)
     (void)ctx;
     switch (op) {
         case IEEE802154_HAL_OP_TRANSMIT:
-
             sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGSMASK,
                          SX127X_RF_LORA_IRQFLAGS_RXTIMEOUT |
                          SX127X_RF_LORA_IRQFLAGS_RXDONE |
@@ -330,7 +332,6 @@ switch (op){
        if (info) {
             info->status = (dev->cad_detected) ? TX_STATUS_MEDIUM_BUSY : TX_STATUS_SUCCESS;
         }
-
     break;
 
     case IEEE802154_HAL_OP_SET_RX:
