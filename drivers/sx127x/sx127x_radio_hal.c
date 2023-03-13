@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#define ENABLE_DEBUG 1
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #include "net/ieee802154/radio.h"
@@ -102,7 +102,7 @@ static void ack_timer_cb(void *arg)
 
     sx127x_set_state(dev, SX127X_RF_TX_RUNNING);
     sx127x_set_op_mode(dev, SX127X_RF_OPMODE_TRANSMITTER );
-    dev->ack_filter = true;
+    dev->pending = true;
 }
 
 void sx127x_hal_setup(sx127x_t *dev, ieee802154_dev_t *hal)
@@ -113,7 +113,7 @@ void sx127x_hal_setup(sx127x_t *dev, ieee802154_dev_t *hal)
     dev->ack_timer.arg = dev;
     dev->ack_timer.callback = ack_timer_cb;
     dev->ack_filter = false;
-    
+    dev->pending = false;
 }
 
 static bool _l2filter(ieee802154_dev_t *hal, uint8_t *mhr)
@@ -213,14 +213,14 @@ void _on_dio0_irq(ieee802154_dev_t *hal, volatile uint8_t interruptReg)
    
     if (interruptReg & SX127X_RF_LORA_IRQFLAGS_TXDONE){
         /* Clear IRQ */
-        if(dev->ack_filter == false){
+        if(dev->pending == false){
         sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGS, 0xFF);
         sx127x_set_state(dev, SX127X_RF_IDLE);
 
         hal->cb(hal, IEEE802154_RADIO_CONFIRM_TX_DONE);
         }
         else {
-            dev->ack_filter = false;
+            dev->pending = false;
             sx127x_reg_write(dev, SX127X_REG_LR_IRQFLAGS, 0xFF);
             DEBUG("[sx126x] TX ACK done.\n");
             ztimer_remove(ZTIMER_USEC, &dev->ack_timer);
