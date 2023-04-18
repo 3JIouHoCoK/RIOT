@@ -19,7 +19,10 @@
         "utility": "c",
         "radio.h": "c",
         "shell.h": "c",
-        "callback.h": "c"
+        "callback.h": "c",
+        "can_params.h": "c",
+        "can.h": "c",
+        "utlist.h": "c"
     },
     "[shellscript][c][cpp]": {
         "editor.tabSize": 4,

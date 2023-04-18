@@ -3,7 +3,7 @@ ifneq (,$(filter native,$(BOARD)))
 endif
 
 # define the CAN driver you want to use here
-CAN_DRIVER ?= MCP2515
+CAN_DRIVER ?= PERIPH_CAN
 
 ifeq ($(CAN_DRIVER), PERIPH_CAN)
   FEATURES_REQUIRED += periph_can
