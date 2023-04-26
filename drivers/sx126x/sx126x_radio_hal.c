@@ -124,9 +124,7 @@ static void ack_timer_cb(void *arg)
 void sx126x_setup(sx126x_t *dev, const sx126x_params_t *params, uint8_t index)
 {
     (void)index;
-#ifdef SX126X_LED_PIN
-    gpio_init(SX126X_LED_PIN, GPIO_OUT);
-#endif
+
     dev->params = (sx126x_params_t *)params;
     dev->ack_timer.arg = dev;
     dev->ack_timer.callback = ack_timer_cb;

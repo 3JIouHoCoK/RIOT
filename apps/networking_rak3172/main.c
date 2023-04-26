@@ -31,6 +31,13 @@
 #include "periph/i2c.h"
 #define MAIN_QUEUE_SIZE     (8)
 #define SOCK_QUEUE_LEN  (1U)
+
+#define _TEST_PORT_REMOTE   (0xa615)
+#define _TEST_ADDR_REMOTE   { 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 }
+
+
+
 static msg_t _main_msg_queue[MAIN_QUEUE_SIZE];
 
 char udp_stack[THREAD_STACKSIZE_DEFAULT];
@@ -43,6 +50,7 @@ volatile be_uint16_t vbat, light;
 void* udp_handler(void *arg);
 void* tcp_handler(void *arg);
 void* i2c_handler(void *arg);
+
 int main(void)
 {
     udp_thread = thread_create(udp_stack, sizeof(udp_stack), THREAD_PRIORITY_MAIN - 1,
@@ -70,29 +78,16 @@ int main(void)
 void* udp_handler(void *arg){
     (void)arg;
 
-    sock_udp_ep_t local = SOCK_IPV6_EP_ANY;
-    sock_udp_t sock;
-    uint8_t udp_buf[128];
-    local.port = 12345;
- 
-    if (sock_udp_create(&sock, &local, NULL, 0) < 0) {
-        puts("Error creating UDP sock");
-        return NULL;
-    }
- 
     while (1) {
-        sock_udp_ep_t remote;
-        ssize_t res;
-        if ((res = sock_udp_recv(&sock, udp_buf, sizeof(udp_buf), 1000,
-                                 &remote)) == -ETIMEDOUT) {
-                char text[127];
-                sprintf(text, "Датчики на LoRa LabKit:\n Датчик освещения = %d\n Напряжение батареи = %d mV\n", light.u16, vbat.u16);
-                if (sock_udp_send(&sock, text, strlen(text), &remote) < 0) {
-                    puts("Error sending reply");
-                }
-                ztimer_sleep(ZTIMER_MSEC, 10000);
-                }   
-        }
+        char text[127];
+        sprintf(text, "LoRa LabKit:\n Light Sensor = %d\n Battery Voltage = %d mV\n", light.u16, vbat.u16);
+    static const sock_udp_ep_t remote = { .addr = { .ipv6 = _TEST_ADDR_REMOTE },
+                                          .family = AF_INET6,
+                                          .port = _TEST_PORT_REMOTE };
+
+    sock_udp_send(NULL, text, strlen(text), &remote);
+        ztimer_sleep(ZTIMER_MSEC, 10000);
+    }
     return NULL;
 }
 
@@ -240,3 +235,4 @@ void* i2c_handler(void *arg){
     }
     return NULL;
 }
+

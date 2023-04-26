@@ -19,7 +19,8 @@
         "ranges": "c",
         "utility": "c",
         "i2c.h": "c",
-        "shell.h": "c"
+        "shell.h": "c",
+        "ndp.h": "c"
     },
     "[shellscript][c][cpp]": {
         "editor.tabSize": 4,
