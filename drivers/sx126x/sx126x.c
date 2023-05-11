@@ -20,8 +20,6 @@
 
 #include <errno.h>
 
-#include "sx126x_netdev.h"
-
 #include "net/lora.h"
 #include "periph/spi.h"
 
@@ -42,12 +40,13 @@
 #endif
 
 #ifndef CONFIG_SX126X_TX_POWER_DEFAULT
-#define CONFIG_SX126X_TX_POWER_DEFAULT          (14U)           /* in dBm */
+#define CONFIG_SX126X_TX_POWER_DEFAULT          (0U)           /* in dBm */
 #endif
 
 #ifndef CONFIG_SX126X_RAMP_TIME_DEFAULT
 #define CONFIG_SX126X_RAMP_TIME_DEFAULT         (SX126X_RAMP_10_US)
 #endif
+
 
 const sx126x_pa_cfg_params_t sx1268_pa_cfg = {
     .pa_duty_cycle = 0x04,
@@ -70,25 +69,27 @@ const sx126x_pa_cfg_params_t hpa_cfg = {
     .pa_lut = 0x01
 };
 
-void sx126x_setup(sx126x_t *dev, const sx126x_params_t *params, uint8_t index)
-{
-    netdev_t *netdev = &dev->netdev;
 
-    netdev->driver = &sx126x_driver;
-    dev->params = (sx126x_params_t *)params;
-    netdev_register(&dev->netdev, NETDEV_SX126X, index);
-}
 
-static const uint16_t _bw_khz[3] = {
-    [LORA_BW_125_KHZ] = 125,
-    [LORA_BW_250_KHZ] = 250,
-    [LORA_BW_500_KHZ] = 500,
+static const uint16_t _bw_khz[11] = {
+    [SX126X_LORA_BW_007] = 7,
+    [SX126X_LORA_BW_010] = 10,
+    [SX126X_LORA_BW_015] = 15,
+    [SX126X_LORA_BW_020] = 20,
+    [SX126X_LORA_BW_031] = 31,
+    [SX126X_LORA_BW_041] = 41,
+    [SX126X_LORA_BW_062] = 62,
+    [SX126X_LORA_BW_125] = 125,
+    [SX126X_LORA_BW_250] = 250,
+    [SX126X_LORA_BW_500] = 500,
 };
+
+extern void _sx126x_handler(void* arg);
 
 static uint8_t _compute_ldro(sx126x_t *dev)
 {
     uint32_t symbol_len =
-        (uint32_t)(1 << dev->mod_params.sf) / _bw_khz[dev->mod_params.bw - SX126X_LORA_BW_125];
+        (uint32_t)(1 << dev->mod_params.sf) / _bw_khz[dev->mod_params.bw];
 
     if (symbol_len >= 16) {
         return 0x01;
@@ -125,12 +126,11 @@ static void sx126x_init_default_config(sx126x_t *dev)
 #endif
     sx126x_set_tx_params(dev, CONFIG_SX126X_TX_POWER_DEFAULT, CONFIG_SX126X_RAMP_TIME_DEFAULT);
 
-    dev->mod_params.bw = (sx126x_lora_bw_t)(CONFIG_LORA_BW_DEFAULT + SX126X_LORA_BW_125);
-    dev->mod_params.sf = (sx126x_lora_sf_t)CONFIG_LORA_SF_DEFAULT;
-    dev->mod_params.cr = (sx126x_lora_cr_t)CONFIG_LORA_CR_DEFAULT;
+    dev->mod_params.bw = (sx126x_lora_bw_t)(SX126X_LORA_BW_125);
+    dev->mod_params.sf = (sx126x_lora_sf_t)LORA_SF7;
+    dev->mod_params.cr = (sx126x_lora_cr_t)(LORA_CR_4_5);
     dev->mod_params.ldro = _compute_ldro(dev);
     sx126x_set_lora_mod_params(dev, &dev->mod_params);
-
     dev->pkt_params.pld_len_in_bytes = 0;
     dev->pkt_params.crc_is_on = !IS_ACTIVE(CONFIG_LORA_PAYLOAD_CRC_OFF_DEFAULT);
     dev->pkt_params.header_type = (
@@ -141,12 +141,14 @@ static void sx126x_init_default_config(sx126x_t *dev)
         IS_ACTIVE(CONFIG_LORA_IQ_INVERTED_DEFAULT) ? true : false
         );
     sx126x_set_lora_pkt_params(dev, &dev->pkt_params);
+    uint8_t bufdata = 0x97;
+    sx126x_write_register(dev, 0x08AC, &bufdata, 1);
 }
 
 #if IS_ACTIVE(SX126X_SPI)
 static void _dio1_isr(void *arg)
 {
-    netdev_trigger_event_isr(arg);
+    _sx126x_handler(arg);
 }
 #endif
 
@@ -160,7 +162,6 @@ int sx126x_init(sx126x_t *dev)
               dev->params->spi, res);
         return -1;
     }
-
     DEBUG("[sx126x] init: SPI_%i initialized with success\n", dev->params->spi);
 
 #if IS_ACTIVE(SX126X_SPI)
@@ -183,13 +184,13 @@ int sx126x_init(sx126x_t *dev)
 
     /* Reset the device */
     sx126x_reset(dev);
-
+    
     /* Configure the power regulator mode */
     sx126x_set_reg_mode(dev, dev->params->regulator);
 
     /* Initialize radio with the default parameters */
     sx126x_init_default_config(dev);
-
+    
     /* Configure available IRQs */
     const uint16_t irq_mask = (
         SX126X_IRQ_TX_DONE |
