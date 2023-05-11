@@ -53,7 +53,9 @@ extern void lora_e5_dev_sx126x_set_rf_mode(sx126x_t *dev, sx126x_rf_mode_t rf_mo
 #define LED2_PORT_NUM       PORT_B
 #define LED2_PIN_NUM        5
 /** @} */
-
+#define SX126X_LED_PIN      GPIO_PIN(LED1_PORT_NUM, LED1_PIN_NUM)
+#define LED_STATUS          GPIO_PIN(LED0_PORT_NUM, LED0_PIN_NUM)
+#define LED_USB_LINK        GPIO_PIN(LED2_PORT_NUM, LED2_PIN_NUM)
 /**
  * @name    User button
  * @{
