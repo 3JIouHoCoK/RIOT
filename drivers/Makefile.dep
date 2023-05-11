@@ -142,10 +142,16 @@ endif
 
 ifneq (,$(filter periph_usbdev_hs_ulpi,$(USEMODULE)))
   FEATURES_REQUIRED += periph_usbdev_hs_ulpi
+  USEMODULE += periph_usbdev_hs
 endif
 
 ifneq (,$(filter periph_usbdev_hs_utmi,$(USEMODULE)))
   FEATURES_REQUIRED += periph_usbdev_hs_utmi
+  USEMODULE += periph_usbdev_hs
+endif
+
+ifneq (,$(filter periph_usbdev_hs,$(USEMODULE)))
+  FEATURES_REQUIRED += periph_usbdev_hs
 endif
 
 ifneq (,$(filter pn532_i2c,$(USEMODULE)))
@@ -168,6 +174,10 @@ endif
 
 ifneq (,$(filter sdp3x_%,$(USEMODULE)))
   USEMODULE += sdp3x
+endif
+
+ifneq (,$(filter servo_%,$(USEMODULE)))
+  USEMODULE += servo
 endif
 
 ifneq (,$(filter sht1%,$(USEMODULE)))

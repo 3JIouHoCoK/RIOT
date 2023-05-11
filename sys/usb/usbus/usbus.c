@@ -162,6 +162,50 @@ usbus_endpoint_t *usbus_interface_find_endpoint(usbus_interface_t *interface,
     return NULL;
 }
 
+size_t usbus_max_bulk_endpoint_size(usbus_t *usbus)
+{
+    usb_speed_t speed;
+    int res = usbdev_get(usbus->dev, USBOPT_ENUMERATED_SPEED, &speed,
+                               sizeof(speed));
+    if (res == -ENOTSUP) {
+        res = usbdev_get(usbus->dev, USBOPT_MAX_SPEED, &speed,
+                               sizeof(speed));
+    }
+
+    if (res < 0) {
+        return 0; /* Misbehaving usbdev device not implementing any speed indication */
+    }
+
+    switch (speed) {
+        case USB_SPEED_HIGH:
+            return USB_ENDPOINT_BULK_HS_MAX_SIZE;
+        default:
+            return USB_ENDPOINT_BULK_FS_MAX_SIZE;
+    }
+}
+
+size_t usbus_max_interrupt_endpoint_size(usbus_t *usbus)
+{
+    usb_speed_t speed;
+    int res = usbdev_get(usbus->dev, USBOPT_ENUMERATED_SPEED, &speed,
+                               sizeof(speed));
+    if (res == -ENOTSUP) {
+        res = usbdev_get(usbus->dev, USBOPT_MAX_SPEED, &speed,
+                               sizeof(speed));
+    }
+
+    if (res < 0) {
+        assert(false); /* Misbehaving usbdev device not implementing mandatory USBOPTS */
+    }
+
+    switch (speed) {
+        case USB_SPEED_HIGH:
+            return USB_ENDPOINT_INTERRUPT_HS_MAX_SIZE;
+        default:
+            return USB_ENDPOINT_INTERRUPT_FS_MAX_SIZE;
+    }
+}
+
 usbus_endpoint_t *usbus_add_endpoint(usbus_t *usbus, usbus_interface_t *iface,
                                      usb_ep_type_t type, usb_ep_dir_t dir,
                                      size_t len)
@@ -426,6 +470,34 @@ static void *_usbus_thread(void *args)
     return NULL;
 }
 
+void usbus_endpoint_halt(usbus_endpoint_t *ep)
+{
+    assert(ep->ep->num != 0); /* Not valid for endpoint 0 */
+    DEBUG("Endpoint %u halted\n", ep->ep->num);
+    ep->halted = 1;
+    usbdev_ep_stall(ep->ep, true);
+}
+
+void usbus_endpoint_clear_halt(usbus_endpoint_t *ep)
+{
+    assert(ep->ep->num != 0); /* Not valid for endpoint 0 */
+    DEBUG("Endpoint %u unhalted\n", ep->ep->num);
+    ep->halted = 0;
+    usbdev_ep_stall(ep->ep, false);
+}
+
+/**
+ * @brief Reset the halted status on USB reset condition
+ */
+static void _usbus_endpoint_reset_halt(usbus_t *usbus)
+{
+    /* Clear halted state. No need to notify usbdev, USB reset already resets those */
+    for (size_t i = 0; i < USBDEV_NUM_ENDPOINTS; i++) {
+        usbus->ep_out[i].halted = 0;
+        usbus->ep_in[i].halted = 0;
+    }
+}
+
 /* USB event callback */
 static void _event_cb(usbdev_t *usbdev, usbdev_event_t event)
 {
@@ -443,6 +515,7 @@ static void _event_cb(usbdev_t *usbdev, usbdev_event_t event)
                 usbus->addr = 0;
                 usbdev_set(usbus->dev, USBOPT_ADDRESS, &usbus->addr,
                            sizeof(uint8_t));
+                _usbus_endpoint_reset_halt(usbus);
                 flag = USBUS_HANDLER_FLAG_RESET;
                 msg = USBUS_EVENT_USB_RESET;
                 DEBUG("usbus: USB reset detected\n");
@@ -482,13 +555,6 @@ static void _event_ep_cb(usbdev_ep_t *ep, usbdev_event_t event)
             switch (event) {
                 case USBDEV_EVENT_TR_COMPLETE:
                     _usbus_transfer_complete(usbus, ep, handler);
-                    break;
-                case USBDEV_EVENT_TR_FAIL:
-                    if (usbus_handler_isset_flag(handler,
-                                                 USBUS_HANDLER_FLAG_TR_FAIL)) {
-                        handler->driver->transfer_handler(usbus, handler, ep,
-                                                          USBUS_EVENT_TRANSFER_FAIL);
-                    }
                     break;
                 case USBDEV_EVENT_TR_STALL:
                     if (usbus_handler_isset_flag(handler,

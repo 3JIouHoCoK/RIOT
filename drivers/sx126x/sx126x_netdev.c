@@ -31,7 +31,7 @@
 #include "sx126x_netdev.h"
 #include "sx126x_internal.h"
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 const uint8_t llcc68_max_sf = LORA_SF11;
@@ -39,7 +39,7 @@ const uint8_t sx126x_max_sf = LORA_SF12;
 
 #if IS_USED(MODULE_SX126X_STM32WL)
 static netdev_t *_dev;
-
+#if !(IS_USED(MODULE_IEEE802154))
 void isr_subghz_radio(void)
 {
     /* Disable NVIC to avoid ISR conflict in CPU. */
@@ -48,6 +48,7 @@ void isr_subghz_radio(void)
     netdev_trigger_event_isr(_dev);
     cortexm_isr_end();
 }
+#endif
 #endif
 
 static int _send(netdev_t *netdev, const iolist_t *iolist)
@@ -311,6 +312,7 @@ static int _set_state(sx126x_t *dev, netopt_state_t state)
     switch (state) {
     case NETOPT_STATE_STANDBY:
         DEBUG("[sx126x] netdev: set NETOPT_STATE_STANDBY state\n");
+
         sx126x_set_standby(dev, SX126X_CHIP_MODE_STBY_XOSC);
         break;
 
@@ -335,6 +337,7 @@ static int _set_state(sx126x_t *dev, netopt_state_t state)
 
     case NETOPT_STATE_TX:
         DEBUG("[sx126x] netdev: set NETOPT_STATE_TX state\n");
+
 #if IS_USED(MODULE_SX126X_RF_SWITCH)
         if (dev->params->set_rf_mode) {
             dev->params->set_rf_mode(dev, dev->params->tx_pa_mode);

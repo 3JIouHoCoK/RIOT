@@ -136,14 +136,13 @@ static int _sock_recv_buf(nanocoap_sock_t *sock, void **data, void **ctx, uint32
 static int _send_ack(nanocoap_sock_t *sock, coap_pkt_t *pkt)
 {
     coap_hdr_t ack;
-    unsigned tkl = coap_get_token_len(pkt);
 
     const iolist_t snip = {
         .iol_base = &ack,
         .iol_len  = sizeof(ack),
     };
 
-    coap_build_hdr(&ack, COAP_TYPE_ACK, coap_get_token(pkt), tkl,
+    coap_build_hdr(&ack, COAP_TYPE_ACK, NULL, 0,
                    COAP_CODE_EMPTY, ntohs(pkt->hdr->id));
 
     return _sock_sendv(sock, &snip);
@@ -370,9 +369,12 @@ static int _get_put_cb(void *arg, coap_pkt_t *pkt)
 
 ssize_t nanocoap_sock_get(nanocoap_sock_t *sock, const char *path, void *buf, size_t len)
 {
-    uint8_t *pktpos = buf;
+    /* buffer for CoAP header */
+    uint8_t buffer[CONFIG_NANOCOAP_BLOCK_HEADER_MAX];
+    uint8_t *pktpos = buffer;
+
     coap_pkt_t pkt = {
-        .hdr = buf,
+        .hdr = (void *)pktpos,
     };
 
     struct iovec ctx = {
@@ -796,24 +798,78 @@ int nanocoap_server(sock_udp_ep_t *local, uint8_t *buf, size_t bufsize)
     }
 
     while (1) {
-        res = sock_udp_recv(&sock.udp, buf, bufsize, -1, &remote);
-        if (res < 0) {
+
+        sock_udp_aux_rx_t *aux_in_ptr = NULL;
+#ifdef MODULE_SOCK_AUX_LOCAL
+        sock_udp_aux_rx_t aux_in = {
+            .flags = SOCK_AUX_GET_LOCAL,
+        };
+        aux_in_ptr = &aux_in;
+#endif
+
+        res = sock_udp_recv_aux(&sock.udp, buf, bufsize, SOCK_NO_TIMEOUT,
+                                &remote, aux_in_ptr);
+        if (res <= 0) {
             DEBUG("error receiving UDP packet %d\n", (int)res);
+            continue;
         }
-        else if (res > 0) {
-            coap_pkt_t pkt;
-            if (coap_parse(&pkt, (uint8_t *)buf, res) < 0) {
-                DEBUG("error parsing packet\n");
-                continue;
-            }
-            if ((res = coap_handle_req(&pkt, buf, bufsize, &ctx)) > 0) {
-                sock_udp_send(&sock.udp, buf, res, &remote);
-            }
-            else {
-                DEBUG("error handling request %d\n", (int)res);
-            }
+        coap_pkt_t pkt;
+        if (coap_parse(&pkt, (uint8_t *)buf, res) < 0) {
+            DEBUG("error parsing packet\n");
+            continue;
         }
+        if ((res = coap_handle_req(&pkt, buf, bufsize, &ctx)) <= 0) {
+            DEBUG("error handling request %d\n", (int)res);
+            continue;
+        }
+
+        sock_udp_aux_tx_t *aux_out_ptr = NULL;
+#ifdef MODULE_SOCK_AUX_LOCAL
+        /* make sure we reply with the same address that the request was
+         * destined for -- except in the multicast case */
+        sock_udp_aux_tx_t aux_out = {
+            .flags = SOCK_AUX_SET_LOCAL,
+            .local = aux_in.local,
+        };
+        if (!sock_udp_ep_is_multicast(&aux_in.local)) {
+            aux_out_ptr = &aux_out;
+        }
+#endif
+        sock_udp_send_aux(&sock.udp, buf, res, &remote, aux_out_ptr);
     }
 
     return 0;
+}
+
+static kernel_pid_t _coap_server_pid;
+static void *_nanocoap_server_thread(void *local)
+{
+    static uint8_t buf[CONFIG_NANOCOAP_SERVER_BUF_SIZE];
+
+    nanocoap_server(local, buf, sizeof(buf));
+
+    return NULL;
+}
+
+kernel_pid_t nanocoap_server_start(const sock_udp_ep_t *local)
+{
+    static char stack[CONFIG_NANOCOAP_SERVER_STACK_SIZE];
+
+    if (_coap_server_pid) {
+        return _coap_server_pid;
+    }
+    _coap_server_pid = thread_create(stack, sizeof(stack), THREAD_PRIORITY_MAIN - 1,
+                                     THREAD_CREATE_STACKTEST, _nanocoap_server_thread,
+                                     (void *)local, "nanoCoAP server");
+    return _coap_server_pid;
+}
+
+void auto_init_nanocoap_server(void)
+{
+    sock_udp_ep_t local = {
+        .port = COAP_PORT,
+        .family = AF_INET6,
+    };
+
+    nanocoap_server_start(&local);
 }

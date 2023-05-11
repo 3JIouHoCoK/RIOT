@@ -218,6 +218,7 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
                                          USB_EP_TYPE_INTERRUPT,
                                          USB_EP_DIR_IN,
                                          USBUS_CDCECM_EP_CTRL_SIZE);
+    assert(cdcecm->ep_ctrl);
     cdcecm->ep_ctrl->interval = 0x10;
 
     cdcecm->ep_out = usbus_add_endpoint(usbus,
@@ -225,12 +226,14 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
                                         USB_EP_TYPE_BULK,
                                         USB_EP_DIR_OUT,
                                         USBUS_CDCECM_EP_DATA_SIZE);
+    assert(cdcecm->ep_out);
     cdcecm->ep_out->interval = 0; /* Must be 0 for bulk endpoints */
     cdcecm->ep_in = usbus_add_endpoint(usbus,
                                        (usbus_interface_t *)&cdcecm->iface_data_alt,
                                        USB_EP_TYPE_BULK,
                                        USB_EP_DIR_IN,
                                        USBUS_CDCECM_EP_DATA_SIZE);
+    assert(cdcecm->ep_in);
     cdcecm->ep_in->interval = 0; /* Must be 0 for bulk endpoints */
 
     /* Add interfaces to the stack */
@@ -332,6 +335,12 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
 static void _handle_reset(usbus_t *usbus, usbus_handler_t *handler)
 {
     usbus_cdcecm_device_t *cdcecm = (usbus_cdcecm_device_t *)handler;
+
+    /* Set the max packet size advertised to the host to something compatible with the enumerated
+     * size */
+    size_t maxpacketsize = usbus_max_bulk_endpoint_size(usbus);
+    cdcecm->ep_in->maxpacketsize = maxpacketsize;
+    cdcecm->ep_out->maxpacketsize = maxpacketsize;
 
     DEBUG("CDC ECM: Reset\n");
     _handle_in_complete(usbus, handler);

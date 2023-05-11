@@ -74,6 +74,16 @@ extern "C" {
 #endif
 
 /**
+ * @brief USBUS MSC auto MTD setting
+ *
+ * When set to 1, the USBUS MSC module will automatically create a LUN for
+ * each MTD device defined in `board.h`.
+ */
+#ifndef CONFIG_USBUS_MSC_AUTO_MTD
+#define CONFIG_USBUS_MSC_AUTO_MTD           1
+#endif
+
+/**
  * @brief USBUS endpoint 0 buffer size
  *
  * This configures the buffer size of the control endpoint. Unless you transfer
@@ -121,15 +131,6 @@ extern "C" {
 #define USBUS_HANDLER_FLAG_SOF      (0x0002)    /**< Report SOF events */
 #define USBUS_HANDLER_FLAG_SUSPEND  (0x0004)    /**< Report suspend events */
 #define USBUS_HANDLER_FLAG_RESUME   (0x0008)    /**< Report resume from suspend */
-
-/**
- * @brief Report transfer fail
- *
- * @deprecated This event is deprecated as only a limited number of low level
- *             devices report this and it doesn't offer value for upper layer
- *             code. This flag will be removed after the 2022.07 release
- */
-#define USBUS_HANDLER_FLAG_TR_FAIL  (0x0010)
 #define USBUS_HANDLER_FLAG_TR_STALL (0x0020)    /**< Report transfer stall complete */
 /** @} */
 
@@ -317,6 +318,7 @@ typedef struct usbus_endpoint {
     uint8_t interval;               /**< Poll interval for interrupt endpoints */
     bool active;                    /**< If the endpoint should be activated after
                                          reset */
+    bool halted;                    /**< Endpoint is halted */
 } usbus_endpoint_t;
 
 /**
@@ -580,6 +582,22 @@ void usbus_register_event_handler(usbus_t *usbus, usbus_handler_t *handler);
 void usbus_init(usbus_t *usbus, usbdev_t *usbdev);
 
 /**
+ * @brief Get the maximum supported bulk endpoint transfer size based on the enumeration speed
+ *
+ * Should only be called after enumeration has finished by the peripheral. Calling this in response
+ * to the @ref USBUS_EVENT_USB_RESET is valid
+ */
+size_t usbus_max_bulk_endpoint_size(usbus_t *usbus);
+
+/**
+ * @brief Get the maximum supported interrupt endpoint transfer size based on the enumeration speed
+ *
+ * Should only be called after enumeration has finished by the peripheral. Calling this in response
+ * to the @ref USBUS_EVENT_USB_RESET is valid
+ */
+size_t usbus_max_interrupt_endpoint_size(usbus_t *usbus);
+
+/**
  * @brief Create and start the USBUS thread
  *
  * @param[in] stack     The stack for the USBUS thread.
@@ -649,6 +667,22 @@ void usbus_urb_submit(usbus_t *usbus, usbus_endpoint_t *endpoint, usbus_urb_t *u
  *                      -1 if the URB was not found in the endpoint queue
  */
 int usbus_urb_cancel(usbus_t *usbus, usbus_endpoint_t *endpoint, usbus_urb_t *urb);
+
+/**
+ * @brief Set the halt condition on an endpoint.
+ *
+ * The endpoint will respond with stall to all packets and must explicitly be
+ * cleared by the host by clearing the halt condition or switching interfaces
+ */
+void usbus_endpoint_halt(usbus_endpoint_t *ep);
+
+/**
+ * @brief Clear the halt condition on an endpoint
+ *
+ * @note Must only be used when the endpoint is halted and when the host issues
+ * a SetInterface request on the interface containing the endpoint
+ */
+void usbus_endpoint_clear_halt(usbus_endpoint_t *ep);
 
 /**
  * @brief Enable an endpoint

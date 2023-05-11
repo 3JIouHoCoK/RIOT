@@ -225,12 +225,7 @@ endif
 
 ifneq (,$(filter trickle,$(USEMODULE)))
   USEMODULE += random
-  ifeq (,$(filter ztimer_msec,$(USEMODULE)))
-    USEMODULE += xtimer
-    ifneq (,$(filter ztimer_xtimer_compat,$(USEMODULE)))
-      USEMODULE += ztimer_msec
-    endif
-  endif
+  USEMODULE += ztimer_msec
 endif
 
 ifneq (,$(filter eui_provider,$(USEMODULE)))
@@ -339,8 +334,22 @@ ifneq (,$(filter random_cmd,$(USEMODULE)))
   USEMODULE += shell_cmd_random
 endif
 
-ifneq (,$(filter shell%,$(USEMODULE)))
-  USEMODULE += stdin
+ifneq (,$(filter shell_commands,$(USEMODULE)))
+  # shell_commands has been renamed to shell_cmds_default, but let's keep this
+  # for backward compatibility
+  USEMODULE += shell_cmds_default
+endif
+
+ifneq (,$(filter shell_cmd%,$(USEMODULE)))
+  # each and every command is a submodule of shell_cmds
+  USEMODULE += shell_cmds
+endif
+
+ifneq (,$(filter shell_cmds,$(USEMODULE)))
+  USEMODULE += shell
+endif
+
+ifneq (,$(filter shell,$(USEMODULE)))
   include $(RIOTBASE)/sys/shell/Makefile.dep
 endif
 
@@ -422,7 +431,7 @@ endif
 
 ifneq (,$(filter cpp11-compat,$(USEMODULE)))
   USEMODULE += cpp_new_delete
-  USEMODULE += xtimer
+  USEMODULE += ztimer64_usec
   USEMODULE += timex
   FEATURES_REQUIRED += cpp
   FEATURES_REQUIRED += libstdcpp
@@ -745,6 +754,15 @@ ifneq (,$(filter nanocoap_dtls,$(USEMODULE)))
   USEPKG += tinydtls
 endif
 
+ifneq (,$(filter nanocoap_server_auto_init,$(USEMODULE)))
+  USEMODULE += nanocoap_server
+endif
+
+ifneq (,$(filter nanocoap_server,$(USEMODULE)))
+  USEMODULE += nanocoap_resources
+  USEMODULE += nanocoap_sock
+endif
+
 ifneq (,$(filter nanocoap_sock,$(USEMODULE)))
   USEMODULE += sock_udp
   USEMODULE += sock_util
@@ -810,7 +828,7 @@ endif
 
 ifneq (,$(filter cord_ep_standalone,$(USEMODULE)))
   USEMODULE += cord_ep
-  USEMODULE += xtimer
+  USEMODULE += ztimer_msec
 endif
 
 ifneq (,$(filter cord_lc,$(USEMODULE)))
@@ -855,6 +873,12 @@ endif
 
 ifneq (,$(filter ut_process,$(USEMODULE)))
   USEMODULE += fmt
+endif
+
+ifneq (,$(filter usbus_msc,$(USEMODULE)))
+  USEMODULE += usbus
+  USEMODULE += mtd
+  USEMODULE += mtd_write_page
 endif
 
 ifneq (,$(filter uuid,$(USEMODULE)))

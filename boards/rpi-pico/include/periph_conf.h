@@ -48,6 +48,23 @@ static const uart_conf_t uart_config[] = {
 
 #define UART_NUMOF      ARRAY_SIZE(uart_config)
 
+static const spi_conf_t spi_config[] = {
+    {
+        .dev = SPI0,
+        .miso_pin = GPIO_PIN(0, 4),
+        .mosi_pin = GPIO_PIN(0, 3),
+        .clk_pin = GPIO_PIN(0, 2)
+    },
+    {
+        .dev = SPI1,
+        .miso_pin = GPIO_PIN(0, 12),
+        .mosi_pin = GPIO_PIN(0, 11),
+        .clk_pin = GPIO_PIN(0, 10)
+    }
+};
+
+#define SPI_NUMOF      ARRAY_SIZE(spi_config)
+
 static const timer_channel_conf_t timer0_channel_config[] = {
     {
         .irqn = TIMER_IRQ_0_IRQn
@@ -77,6 +94,21 @@ static const timer_conf_t timer_config[] = {
 #define TIMER_0_ISRD    isr_timer3
 
 #define TIMER_NUMOF     ARRAY_SIZE(timer_config)
+
+/**
+ * @name   ADC configuration
+ *
+ * The configuration consists simply of a list of channels that should be used
+ * @{
+ */
+static const adc_conf_t adc_config[] = {
+                                        { .pin = GPIO_PIN(0, 26), .chan = 0},
+                                        { .pin = GPIO_PIN(0, 27), .chan = 1},
+                                        { .pin = GPIO_PIN(0, 28), .chan = 2},
+                                        };
+
+#define ADC_NUMOF           ARRAY_SIZE(adc_config)
+/** @} */
 
 #ifdef __cplusplus
 }

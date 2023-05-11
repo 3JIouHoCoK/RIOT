@@ -57,6 +57,15 @@ static mrf24j40_t mrf24j40_dev[MRF24J40_NUM];
 static bhp_event_t mrf24j40_bhp[MRF24J40_NUM];
 #endif
 
+#ifdef MODULE_SX126X
+#include "sx126x.h"
+#include "sx126x_params.h"
+
+#define SX126X_NUMOF                ARRAY_SIZE(sx126x_params)
+
+static sx126x_t sx126x_devs[SX126X_NUMOF];
+#endif
+
 void ieee802154_hal_test_init_devs(ieee802154_dev_cb_t cb, void *opaque)
 {
     if (IS_USED(MODULE_EVENT_THREAD)) {
@@ -117,5 +126,15 @@ void ieee802154_hal_test_init_devs(ieee802154_dev_cb_t cb, void *opaque)
             break;
         }
     }
+#endif
+
+#ifdef MODULE_SX126X
+    if((radio = cb(IEEE802154_DEV_TYPE_SX126X, opaque))){
+        for (unsigned i = 0; i < SX126X_NUMOF; ++i) {
+        sx126x_hal_setup(&sx126x_devs[i], radio);
+        sx126x_setup(&sx126x_devs[i], &sx126x_params[i],  i);
+        sx126x_init(&sx126x_devs[i]);
+        }
+    };
 #endif
 }

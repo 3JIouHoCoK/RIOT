@@ -28,8 +28,9 @@ typedef struct {
 
 RingbufHandle_t xRingbufferCreate(size_t xBufferSize, RingbufferType_t xBufferType)
 {
-    /* only byte buffer supported for now */
-    assert(xBufferType == RINGBUF_TYPE_BYTEBUF);
+    /* only byte and no split buffers are supported for now */
+    assert((xBufferType == RINGBUF_TYPE_BYTEBUF) ||
+           (xBufferType == RINGBUF_TYPE_NOSPLIT));
 
     /* allocate the space for rbuf_handle_t including the buffer */
     rbuf_handle_t *handle = malloc(xBufferSize + sizeof(uint16_t) + sizeof(ringbuffer_t));
@@ -37,6 +38,7 @@ RingbufHandle_t xRingbufferCreate(size_t xBufferSize, RingbufferType_t xBufferTy
         return NULL;
     }
     handle->item_size = 0;
+    handle->buf = NULL;
     ringbuffer_init((ringbuffer_t *)handle, handle->buf, xBufferSize);
 
     return handle;

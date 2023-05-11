@@ -36,7 +36,7 @@
 #include "esp_common.h"
 #include "gpio_arch.h"
 
-#include "esp_idf_api/adc.h"
+#include "driver/adc.h"
 
 #define ENABLE_DEBUG 0
 #include "debug.h"
@@ -131,18 +131,22 @@ int adc_init(adc_t line)
     }
 
     if (_adc_hw[rtcio].adc_ctrl == ADC_UNIT_1) {
+        /* ensure compatibility of given adc_channel_t with adc1_channel_t */
+        assert(_adc_hw[rtcio].adc_channel < (adc_channel_t)ADC1_CHANNEL_MAX);
         /* initialize the ADC1 unit if needed */
         _adc1_ctrl_init();
         /* set the attenuation and configure its associated GPIO pin mux */
-        esp_idf_adc1_config_channel_atten(_adc_hw[rtcio].adc_channel,
-                                          ADC_ATTEN_DB_11);
+        adc1_config_channel_atten((adc1_channel_t)_adc_hw[rtcio].adc_channel,
+                                  ADC_ATTEN_DB_11);
     }
     else if (_adc_hw[rtcio].adc_ctrl == ADC_UNIT_2) {
+        /* ensure compatibility of given adc_channel_t with adc2_channel_t */
+        assert(_adc_hw[rtcio].adc_channel < (adc_channel_t)ADC2_CHANNEL_MAX);
         /* initialize the ADC2 unit if needed */
         _adc2_ctrl_init();
         /* set the attenuation and configure its associated GPIO pin mux */
-        esp_idf_adc2_config_channel_atten(_adc_hw[rtcio].adc_channel,
-                                          ADC_ATTEN_DB_11);
+        adc2_config_channel_atten((adc2_channel_t)_adc_hw[rtcio].adc_channel,
+                                  ADC_ATTEN_DB_11);
     }
     else {
         return -1;
@@ -166,15 +170,19 @@ int32_t adc_sample(adc_t line, adc_res_t res)
     int raw;
 
     if (_adc_hw[rtcio].adc_ctrl == ADC_UNIT_1) {
-        esp_idf_adc1_config_width(_adc_esp_res_map[res].res);
-        raw = esp_idf_adc1_get_raw(_adc_hw[rtcio].adc_channel);
+        adc1_config_width(_adc_esp_res_map[res].res);
+         /* ensure compatibility of given adc_channel_t with adc1_channel_t */
+        assert(_adc_hw[rtcio].adc_channel < (adc_channel_t)ADC1_CHANNEL_MAX);
+        raw = adc1_get_raw((adc1_channel_t)_adc_hw[rtcio].adc_channel);
         if (raw < 0) {
             return -1;
         }
     }
     else if (_adc_hw[rtcio].adc_ctrl == ADC_UNIT_2) {
-        if (esp_idf_adc2_get_raw(_adc_hw[rtcio].adc_channel,
-                                 _adc_esp_res_map[res].res, &raw) < 0) {
+         /* ensure compatibility of given adc_channel_t with adc2_channel_t */
+        assert(_adc_hw[rtcio].adc_channel < (adc_channel_t)ADC2_CHANNEL_MAX);
+        if (adc2_get_raw((adc2_channel_t)_adc_hw[rtcio].adc_channel,
+                         _adc_esp_res_map[res].res, &raw) < 0) {
             return -1;
         }
     }
@@ -191,12 +199,14 @@ int adc_set_attenuation(adc_t line, adc_atten_t atten)
     assert(rtcio != RTCIO_NA);
 
     if (_adc_hw[rtcio].adc_ctrl == ADC_UNIT_1) {
-        return esp_idf_adc1_config_channel_atten(_adc_hw[rtcio].adc_channel,
-                                                 atten);
+         /* ensure compatibility of given adc_channel_t with adc1_channel_t */
+        assert(_adc_hw[rtcio].adc_channel < (adc_channel_t)ADC1_CHANNEL_MAX);
+        return adc1_config_channel_atten((adc1_channel_t)_adc_hw[rtcio].adc_channel, atten);
     }
     else if (_adc_hw[rtcio].adc_ctrl == ADC_UNIT_2) {
-        return esp_idf_adc2_config_channel_atten(_adc_hw[rtcio].adc_channel,
-                                                 atten);
+         /* ensure compatibility of given adc_channel_t with adc2_channel_t */
+        assert(_adc_hw[rtcio].adc_channel < (adc_channel_t)ADC2_CHANNEL_MAX);
+        return adc2_config_channel_atten((adc2_channel_t)_adc_hw[rtcio].adc_channel, atten);
     }
 
     return -1;
@@ -221,10 +231,10 @@ int adc_line_vref_to_gpio(adc_t line, gpio_t gpio)
     esp_err_t res = ESP_OK;
 
     if (_adc_hw[rtcio_vref].adc_ctrl == ADC_UNIT_1) {
-        res = esp_idf_adc_vref_to_gpio(ADC_UNIT_1, gpio);
+        res = adc_vref_to_gpio(ADC_UNIT_1, gpio);
     }
     else if (_adc_hw[rtcio_vref].adc_ctrl == ADC_UNIT_2) {
-        res = esp_idf_adc_vref_to_gpio(ADC_UNIT_2, gpio);
+        res = adc_vref_to_gpio(ADC_UNIT_2, gpio);
     }
     if (res != ESP_OK) {
         LOG_TAG_ERROR("adc", "Could not route Vref of ADC line %d to GPIO%d\n",

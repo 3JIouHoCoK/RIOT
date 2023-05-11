@@ -2305,7 +2305,6 @@ warning: Member FCFG1_DAC_BIAS_CNF_LPM_BIAS_BACKUP_EN (macro definition) of file
 warning: Member FCFG1_DAC_BIAS_CNF_LPM_BIAS_WIDTH_TRIM_m (macro definition) of file cc26x2_cc13x2_fcfg.h is not documented.
 warning: Member FCFG1_DAC_BIAS_CNF_LPM_BIAS_WIDTH_TRIM_s (macro definition) of file cc26x2_cc13x2_fcfg.h is not documented.
 warning: Member FCFG1_DAC_BIAS_CNF_LPM_TRIM_IOUT_s (macro definition) of file cc26x2_cc13x2_fcfg.h is not documented.
-warning: Member F_CPU (macro definition) of file board.h is not documented.
 warning: Member FEATURE_EN_ACK_PAY (macro definition) of file nrf24l01p_settings.h is not documented.
 warning: Member FEATURE_EN_DPL (macro definition) of file nrf24l01p_settings.h is not documented.
 warning: Member FEATURE_EN_DYN_ACK (macro definition) of file nrf24l01p_settings.h is not documented.
@@ -2362,7 +2361,6 @@ warning: Member FRAME_5_PAUSE (macro definition) of file enc28j60_regs.h is not 
 warning: Member FRAME_5_RCV_CTRL (macro definition) of file enc28j60_regs.h is not documented.
 warning: Member FRAME_5_UKWN_OPCODE (macro definition) of file enc28j60_regs.h is not documented.
 warning: Member FRAME_5_VLAN (macro definition) of file enc28j60_regs.h is not documented.
-warning: Member F_RC_OSCILLATOR (macro definition) of file board.h is not documented.
 warning: Member FRDM_NOR_SPI_CLK (macro definition) of file board.h is not documented.
 warning: Member FRDM_NOR_SPI_DEV (macro definition) of file board.h is not documented.
 warning: Member FSK_BT_10 (macro definition) of file at86rf215_registers.h is not documented.
@@ -5348,8 +5346,6 @@ warning: Member MRF24J40_WAKECON_IMMWAKE (macro definition) of file mrf24j40_reg
 warning: Member MRF24J40_WAKECON_REGWAKE (macro definition) of file mrf24j40_registers.h is not documented.
 warning: Member MRF24J40_WAKEUP_DELAY (macro definition) of file mrf24j40_registers.h is not documented.
 warning: Member MRF25J40_BBREG2_CCAMODE1 (macro definition) of file mrf24j40_registers.h is not documented.
-warning: Member MSP430_HAS_DCOR (macro definition) of file board.h is not documented.
-warning: Member MSP430_HAS_EXTERNAL_CRYSTAL (macro definition) of file board.h is not documented.
 warning: Member MTD_0 (macro definition) of file board.h is not documented.
 warning: Member mtd0 (variable) of file board.h is not documented.
 warning: Member MTD_1 (macro definition) of file board.h is not documented.
@@ -8698,3 +8694,29 @@ warning: unable to resolve reference to 'esp32s2_devkit_optional_hardware' for \
 warning: unable to resolve reference to 'esp32s3_devkit_optional_hardware' for \ref command
 warning: unable to resolve reference to 'esp32_ttgo_t_beam_optional_hardware' for \ref command
 warning: unable to resolve reference to 'nrf52840dongle_flash' for \ref command
+warning: Member USBUS_MSC_BUFFER_SIZE (macro definition) of file msc.h is not documented.
+warning: Member USBUS_MSC_EXPORTED_DEV (macro definition) of file msc.h is not documented.
+warning: Member usbus_msc_state_t (enumeration) of file msc.h is not documented.
+warning: Member USBUS_MSC_VENDOR_ID (macro definition) of file scsi.h is not documented.
+warning: Member USBUS_MSC_PRODUCT_ID (macro definition) of file scsi.h is not documented.
+warning: Member USBUS_MSC_PRODUCT_REV (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_VERSION_NONE (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_VERSION_SCSI1 (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_VERSION_SCSI2 (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_READ_FMT_CAPA_TYPE_RESERVED (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_READ_FMT_CAPA_TYPE_UNFORMATTED (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_READ_FMT_CAPA_TYPE_FORMATTED (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_READ_FMT_CAPA_TYPE_NO_MEDIA (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_NO_SENSE (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_RECOVERED_ERROR (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_NOT_READY (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_MEDIUM_ERROR (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_HARDWARE_ERROR (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_ILLEGAL_REQUEST (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_UNIT_ATTENTION (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_DATA_PROTECT (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_BLANK_CHECK (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_VENDOR_SPECIFIC (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_ABORTED_COMMAND (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_VOLUME_OVERFLOW (macro definition) of file scsi.h is not documented.
+warning: Member SCSI_SENSE_KEY_MISCOMPARE (macro definition) of file scsi.h is not documented.

@@ -391,6 +391,14 @@ typedef struct {
 /** @} */
 
 /**
+ * @brief   ADC channel configuration data
+ */
+typedef struct {
+    gpio_t pin;             /**< Pin connected to the channel */
+    uint8_t chan;           /**< CPU ADC channel connected to the pin */
+} adc_conf_t;
+
+/**
  * @brief   Configuration details for an UART interface needed by the RPX0XX peripheral
  */
 typedef struct {
@@ -487,7 +495,7 @@ static inline void gpio_reset_all_config(uint8_t pin)
  */
 static inline void periph_reset(uint32_t components)
 {
-    io_reg_atomic_set(&RESETS->RESET.reg, components);
+    io_reg_atomic_set(&RESETS->RESET, components);
 }
 
 /**
@@ -498,8 +506,8 @@ static inline void periph_reset(uint32_t components)
  */
 static inline void periph_reset_done(uint32_t components)
 {
-    io_reg_atomic_clear(&RESETS->RESET.reg, components);
-    while ((~RESETS->RESET_DONE.reg) & components) { }
+    io_reg_atomic_clear(&RESETS->RESET, components);
+    while ((~RESETS->RESET_DONE) & components) { }
 }
 
 /**
@@ -613,6 +621,13 @@ void clock_gpout2_configure(uint32_t f_in, uint32_t f_out, CLOCKS_CLK_GPOUT2_CTR
  */
 void clock_gpout3_configure(uint32_t f_in, uint32_t f_out, CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_Enum aux);
 
+/**
+ * @brief   Configure the ADC clock to run from a dedicated auxiliary
+ *          clock source
+ *
+ * @param   aux     Auxiliary clock source
+ */
+void clock_adc_configure(CLOCKS_CLK_ADC_CTRL_AUXSRC_Enum aux);
 /** @} */
 
 /**
@@ -636,7 +651,7 @@ void pll_start_sys(uint8_t ref_div,
                    uint8_t post_div_1, uint8_t post_div_2);
 
 /**
- * @brief   Start the PLL for the system clock
+ * @brief   Start the PLL for the USB clock
  *          output[MHz] = f_ref / @p ref_div * @p vco_feedback_scale / @p post_div_1 / @p post_div_2
  *
  * @note    Usual setting should be (12 MHz, 1, 40, 5, 2) to get a 48 MHz USB clock signal
@@ -715,6 +730,39 @@ void rosc_start(void);
 void rosc_stop(void);
 
 /** @} */
+
+/**
+ * @brief   Override SPI clock speed values
+ * @{
+ */
+#define HAVE_SPI_CLK_T
+enum {
+    SPI_CLK_100KHZ = KHZ(100), /**< drive the SPI bus with 100KHz */
+    SPI_CLK_400KHZ = KHZ(400), /**< drive the SPI bus with 400KHz */
+    SPI_CLK_1MHZ   = MHZ(1),   /**< drive the SPI bus with 1MHz */
+    SPI_CLK_5MHZ   = MHZ(5),   /**< drive the SPI bus with 5MHz */
+    SPI_CLK_10MHZ  = MHZ(10),  /**< drive the SPI bus with 10MHz */
+};
+
+/**
+ * @brief   SPI clock type
+ */
+typedef uint32_t spi_clk_t;
+/** @} */
+
+/**
+ * @brief   Configuration details for an SPI interface needed by the RPX0XX peripheral
+ */
+typedef struct {
+    SPI0_Type *dev;     /**< Base address of the I/O registers of the device */
+    gpio_t miso_pin;    /**< GPIO pin to use for MISO */
+    gpio_t mosi_pin;    /**< GPIO pin to use for MOSI */
+    gpio_t clk_pin;     /**< GPIO pin to use for CLK */
+} spi_conf_t;
+
+#define PERIPH_SPI_NEEDS_TRANSFER_REG
+#define PERIPH_SPI_NEEDS_TRANSFER_REGS
+#define PERIPH_SPI_NEEDS_TRANSFER_BYTE
 
 #ifdef __cplusplus
 }

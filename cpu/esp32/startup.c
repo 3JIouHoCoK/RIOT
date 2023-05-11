@@ -240,8 +240,8 @@ static NORETURN void IRAM system_init (void)
 
     /* set log levels for SDK library outputs */
     extern void esp_log_level_set(const char* tag, esp_log_level_t level);
-    esp_log_level_set("wifi", LOG_DEBUG);
-    esp_log_level_set("gpio", LOG_DEBUG);
+    esp_log_level_set("wifi", (esp_log_level_t)LOG_DEBUG);
+    esp_log_level_set("gpio", (esp_log_level_t)LOG_DEBUG);
 
     /* init watchdogs */
     system_wdt_init();
@@ -322,7 +322,7 @@ static NORETURN void IRAM system_init (void)
     LOG_STARTUP("Starting RIOT kernel on PRO cpu\n");
     esp_rom_uart_tx_wait_idle(CONFIG_ESP_CONSOLE_UART_NUM);
 #else
-    puts("");
+    ets_printf("\n");
 #endif
     kernel_init();
     UNREACHABLE();
