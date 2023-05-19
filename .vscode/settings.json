@@ -7,7 +7,10 @@
     "files.insertFinalNewline": true,
     "files.associations": {
         "Makefile.*": "makefile",
-        "*.mk": "makefile"
+        "*.mk": "makefile",
+        "board.h": "c",
+        "nanocoap_sock.h": "c",
+        "stdlib.h": "c"
     },
     "[shellscript][c][cpp]": {
         "editor.tabSize": 4,
