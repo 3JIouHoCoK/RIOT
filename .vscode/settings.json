@@ -10,7 +10,20 @@
         "*.mk": "makefile",
         "board.h": "c",
         "nanocoap_sock.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "clk_conf.h": "c",
+        "optional": "c",
+        "ratio": "c",
+        "system_error": "c",
+        "array": "c",
+        "functional": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "istream": "c",
+        "ostream": "c",
+        "i2c.h": "c",
+        "string_view": "c"
     },
     "[shellscript][c][cpp]": {
         "editor.tabSize": 4,

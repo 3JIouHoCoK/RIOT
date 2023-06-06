@@ -109,6 +109,19 @@ static const spi_conf_t spi_config[] = {
         .rccmask  = RCC_APB3ENR_SUBGHZSPIEN,
         .apbbus   = APB3,
     },
+    {
+        .dev      = SPI1,
+        .mosi_pin = GPIO_PIN(PORT_A, 7),
+        .miso_pin = GPIO_PIN(PORT_A, 6),
+        .sclk_pin = GPIO_PIN(PORT_A, 5),
+        .cs_pin   = SPI_CS_UNDEF,
+        .mosi_af  = GPIO_AF5,
+        .miso_af  = GPIO_AF5,
+        .sclk_af  = GPIO_AF5,
+        .cs_af    = GPIO_AF5,
+        .rccmask  = RCC_APB2ENR_SPI1EN,
+        .apbbus   = APB2,
+    },
 /* SUBGHZ DEBUG PINS use the SPI1 pins */
 #if !IS_ACTIVE(CONFIG_STM32_WLX5XX)
     {
@@ -146,11 +159,23 @@ static const i2c_conf_t i2c_config[] = {
         .rcc_mask       = RCC_APB1ENR1_I2C2EN,
         .rcc_sw_mask    = RCC_CCIPR_I2C2SEL_1,      /* HSI (16 MHz) */
         .irqn           = I2C2_ER_IRQn,
+    },
+        {
+        .dev            = I2C1,
+        .speed          = I2C_SPEED_FAST,
+        .scl_pin        = GPIO_PIN(PORT_B, 6),
+        .sda_pin        = GPIO_PIN(PORT_B, 7),
+        .scl_af         = GPIO_AF4,
+        .sda_af         = GPIO_AF4,
+        .bus            = APB1,
+        .rcc_mask       = RCC_APB1ENR1_I2C1EN,
+        .rcc_sw_mask    = RCC_CCIPR_I2C1SEL_1,      /* HSI (16 MHz) */
+        .irqn           = I2C1_ER_IRQn,
     }
 };
 
 #define I2C_1_ISR           isr_i2c2_er
-
+#define I2C_2_ISR           isr_i2c1_er
 #define I2C_NUMOF           ARRAY_SIZE(i2c_config)
 /** @} */
 

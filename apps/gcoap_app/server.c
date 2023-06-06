@@ -37,8 +37,11 @@
 #include "kernel_defines.h"
 #include "board.h"
 #include "periph/i2c.h"
+#include "periph/spi.h"
 #include "luid.h"
 #include "ztimer.h"
+
+#include "arducam.h"
 
 #if IS_USED(MODULE_GCOAP_DTLS)
 #include "net/credman.h"
@@ -62,7 +65,9 @@ static const credman_credential_t credential = {
 };
 #endif
 
-char photo_test[] = "Globalito terebitulius fillito abacus futaribachi ookimana bigus. Collochitaria lobira laputiatial otratina papulatius torus onna no ko to otoko no ko";
+char photo_test[1024];
+uint32_t photo_size;
+static uint32_t _make_photo(uint8_t type);
 
 static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
                             size_t maxlen, coap_link_encoder_ctx_t *context);
@@ -72,6 +77,7 @@ static ssize_t _led_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_requ
 static ssize_t _bat_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx);
 static ssize_t _light_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx);
 static ssize_t _photo_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx);
+static ssize_t _photo_length_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx);
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {
     { "/cli/stats", COAP_GET | COAP_PUT, _stats_handler, NULL },
@@ -79,7 +85,8 @@ static const coap_resource_t _resources[] = {
     { "/led", COAP_GET | COAP_POST, _led_handler, NULL },
     { "/sensors/bat", COAP_GET, _bat_handler, NULL },
     { "/sensors/light", COAP_GET, _light_handler, NULL },
-    { "/photo", COAP_GET, _photo_handler, NULL },
+    { "/photo", COAP_GET | COAP_POST, _photo_handler, NULL },
+    { "/photo/length", COAP_GET , _photo_length_handler, NULL },
 };
 
 static const char *_link_params[] = {
@@ -130,7 +137,8 @@ static ssize_t _stats_handler(coap_pkt_t* pdu, uint8_t *buf, size_t len, coap_re
     /* read coap method type in packet */
     unsigned method_flag = coap_method2flag(coap_get_code_detail(pdu));
 
-    switch (method_flag) {
+    switch (method_flag) 
+    {
         case COAP_GET:
             gcoap_resp_init(pdu, buf, len, COAP_CODE_CONTENT);
             coap_opt_add_format(pdu, COAP_FORMAT_TEXT);
@@ -201,11 +209,11 @@ static ssize_t _led_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_requ
             }
 
         case COAP_POST:
-            if(pdu->payload[0] == '0'){
+            if(atoi((char*)pdu->payload) == 0){
                 gpio_write(LED_USB_LINK, 0);
                 return gcoap_response(pdu, buf, len, COAP_CODE_CHANGED);
             }
-            else if (pdu->payload[0] == '1'){
+            else if (atoi((char*)pdu->payload) == 1){
                 gpio_write(LED_USB_LINK, 1);
                 return gcoap_response(pdu, buf, len, COAP_CODE_CHANGED); 
             }
@@ -258,19 +266,78 @@ static ssize_t _light_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_re
 static ssize_t _photo_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx)
 {
     (void)ctx;
-    coap_block_slicer_t slicer;
-    coap_block2_init(pdu, &slicer);
+    unsigned method_flag = coap_method2flag(coap_get_code_detail(pdu));
+
+    switch (method_flag) 
+    {
+        case COAP_GET:
+        {
+            coap_block_slicer_t slicer;
+            coap_block2_init(pdu, &slicer);
+
+            gcoap_resp_init(pdu, buf, len, COAP_CODE_CONTENT);
+            coap_opt_add_format(pdu, COAP_FORMAT_OCTET);
+            coap_opt_add_block2(pdu, &slicer, 1);
+            ssize_t plen = coap_opt_finish(pdu, COAP_OPT_FINISH_PAYLOAD);
+            
+            plen += coap_blockwise_put_bytes(&slicer, buf+plen, photo_test, 1024);
+            coap_block2_finish(&slicer);
+            return plen;
+        }
+        case COAP_POST:
+        {
+            if((atoi((char*)pdu->payload) >= 0) && ((atoi((char*)pdu->payload) < 8))) //Сделать фото
+            {
+                photo_size = _make_photo((atoi((char*)pdu->payload)));
+                return gcoap_response(pdu, buf, len, COAP_CODE_CHANGED);
+            }
+            else if(atoi((char*)pdu->payload) == 10) //Прочитать кусок из памяти
+            {
+                spi_acquire(1, SPI_CS_UNDEF, SPI_MODE_0, SPI_CLK_1MHZ);
+                CS_LOW();
+                spi_transfer_byte(1, SPI_CS_UNDEF, 1, ARDUCHIP_TEST1);
+                CS_HIGH();
+
+                CS_LOW();
+                    spi_transfer_regs(1, SPI_CS_UNDEF, BURST_FIFO_READ, NULL, photo_test, 1024);
+                CS_HIGH();
+                spi_release(1);
+                return gcoap_response(pdu, buf, len, COAP_CODE_CHANGED);
+            }
+
+            return gcoap_response(pdu, buf, len, COAP_CODE_BAD_REQUEST);
+        }
+    }
+    return 0;
+}
+static uint32_t _make_photo(uint8_t type)   
+{    
+    spi_acquire(1, SPI_CS_UNDEF, SPI_MODE_0, SPI_CLK_1MHZ);
+    i2c_acquire(1);
+    OV5642_set_JPEG_size(type); 
+	flush_fifo();
+	clear_fifo_flag();
+	start_capture(); 
+	while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK)){;}
+	//printf("ACK CMD capture done\r\n");
+	uint32_t length= read_fifo_length();
+    char buf[10];
+    sprintf(buf, "%ld", length);
+    puts(buf);
+    i2c_release(1);
+    spi_release(1);
+    return length;
+}
+static ssize_t _photo_length_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx){
+    (void)ctx;
     gcoap_resp_init(pdu, buf, len, COAP_CODE_CONTENT);
     coap_opt_add_format(pdu, COAP_FORMAT_TEXT);
-
-    coap_opt_add_block2(pdu, &slicer, 1);
-    ssize_t plen = coap_opt_finish(pdu, COAP_OPT_FINISH_PAYLOAD);
-    plen += coap_blockwise_put_bytes(&slicer, buf+plen, photo_test, 128);
-    coap_block2_finish(&slicer);
-    return plen;
-
+    size_t resp_len = coap_opt_finish(pdu, COAP_OPT_FINISH_PAYLOAD); 
+    spi_acquire(1, SPI_CS_UNDEF, SPI_MODE_0, SPI_CLK_1MHZ);
+    sprintf((char*)pdu->payload, "%ld", read_fifo_length());
+    spi_release(1);
+    return strlen((char*)pdu->payload) + resp_len;
 }
-
 void notify_observers(void)
 {
     size_t len;
@@ -311,6 +378,7 @@ void server_init(void)
         printf("gcoap: cannot add credential to DTLS sock: %d\n", res);
     }
 #endif
-
+    if(arducam_init() != 0) //CAMERA INITIALAZING
+        puts("Error camera initialazing\n");
     gcoap_register_listener(&_listener);
 }

@@ -56,6 +56,7 @@ USEMODULE += shell_cmds_default
 USEMODULE += ps
 USEMODULE += gnrc_rpl
 USEMODULE += ztimer_msec
+USEMODULE += ztimer_usec
 USEMODULE += periph_i2c
 USEMODULE += shell_cmd_gnrc_pktbuf
 # Comment this out to disable code in RIOT that does safety checking
