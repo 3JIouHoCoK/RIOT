@@ -43,6 +43,10 @@
 
 #include "arducam.h"
 
+#include "lm75.h"
+#include "lm75_regs.h"
+#include "lm75_params.h"
+
 #if IS_USED(MODULE_GCOAP_DTLS)
 #include "net/credman.h"
 #include "net/dsm.h"
@@ -68,6 +72,7 @@ static const credman_credential_t credential = {
 char photo_test[1024];
 uint32_t photo_size;
 static uint32_t _make_photo(uint8_t type);
+lm75_t lm75_dev;
 
 static ssize_t _encode_link(const coap_resource_t *resource, char *buf,
                             size_t maxlen, coap_link_encoder_ctx_t *context);
@@ -77,16 +82,18 @@ static ssize_t _led_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_requ
 static ssize_t _bat_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx);
 static ssize_t _light_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx);
 static ssize_t _photo_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx);
+static ssize_t _temp_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx);
 static ssize_t _photo_length_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx);
 /* CoAP resources. Must be sorted by path (ASCII order). */
 static const coap_resource_t _resources[] = {
     { "/cli/stats", COAP_GET | COAP_PUT, _stats_handler, NULL },
-    { "/riot/board", COAP_GET, _riot_board_handler, NULL },
     { "/led", COAP_GET | COAP_POST, _led_handler, NULL },
-    { "/sensors/bat", COAP_GET, _bat_handler, NULL },
-    { "/sensors/light", COAP_GET, _light_handler, NULL },
     { "/photo", COAP_GET | COAP_POST, _photo_handler, NULL },
     { "/photo/length", COAP_GET , _photo_length_handler, NULL },
+    { "/sensors/bat", COAP_GET, _bat_handler, NULL },
+    { "/sensors/light", COAP_GET, _light_handler, NULL },
+    { "/temprature", COAP_GET, _temp_handler, NULL },
+    { "/riot/board", COAP_GET, _riot_board_handler, NULL }
 };
 
 static const char *_link_params[] = {
@@ -338,6 +345,16 @@ static ssize_t _photo_length_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, 
     spi_release(1);
     return strlen((char*)pdu->payload) + resp_len;
 }
+static ssize_t _temp_handler(coap_pkt_t *pdu, uint8_t *buf, size_t len, coap_request_ctx_t *ctx){
+    (void)ctx;
+    gcoap_resp_init(pdu, buf, len, COAP_CODE_CONTENT);
+    coap_opt_add_format(pdu, COAP_FORMAT_TEXT);
+    size_t resp_len = coap_opt_finish(pdu, COAP_OPT_FINISH_PAYLOAD); 
+    int temp = 0;
+    lm75_get_temperature(&lm75_dev, &temp);
+    sprintf((char*)pdu->payload, "%d", temp);
+    return strlen((char*)pdu->payload) + resp_len;
+}
 void notify_observers(void)
 {
     size_t len;
@@ -378,7 +395,13 @@ void server_init(void)
         printf("gcoap: cannot add credential to DTLS sock: %d\n", res);
     }
 #endif
+    
+
     if(arducam_init() != 0) //CAMERA INITIALAZING
         puts("Error camera initialazing\n");
+    
+    if (lm75_init(&lm75_dev, lm75_params) != LM75_SUCCESS) {
+        puts("Initialization  failed");
+    }
     gcoap_register_listener(&_listener);
 }

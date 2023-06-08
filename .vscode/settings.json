@@ -23,7 +23,8 @@
         "istream": "c",
         "ostream": "c",
         "i2c.h": "c",
-        "string_view": "c"
+        "string_view": "c",
+        "lm75_params.h": "c"
     },
     "[shellscript][c][cpp]": {
         "editor.tabSize": 4,
