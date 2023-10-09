@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 #include "net/ieee802154/radio.h"
@@ -205,6 +205,12 @@ static int _set_state(sx126x_t *dev, sx126x_state_t state)
         sx126x_set_tx(dev, 0);
         break;
 
+    case STATE_CCA:
+        DEBUG("[sx126x] netdev: set STATE_CCA\n");
+        dev->cad_done = false;
+        sx126x_set_cad(dev);    
+        break;
+
     default:
         return -ENOTSUP;
     }
@@ -336,10 +342,10 @@ void sx126x_hal_task_handler(ieee802154_dev_t *hal)
         if (irq_mask & SX126X_IRQ_CAD_DETECTED){
             DEBUG("[sx126x] netdev: SX126X_IRQ_CAD_DETECTED \n");
             dev->cad_detected = true;
+            hal->cb(hal, IEEE802154_RADIO_CONFIRM_TX_DONE);
         }
         DEBUG("[sx126x] netdev: SX126X_IRQ_CAD_DONE\n");
-        hal->cb(hal, IEEE802154_RADIO_CONFIRM_CCA);
-        _set_state(dev, STATE_RX);
+        dev->cad_done = true;
         
     }
     else if (irq_mask & SX126X_IRQ_TIMEOUT) {
@@ -413,7 +419,7 @@ static int _request_op(ieee802154_dev_t *hal, ieee802154_hal_op_t op, void *ctx)
             DEBUG("[sx126x] netdev: HAL_OP_CCA (CAD Detection state)\n");
             dev->cad_detected = 0;
             _set_state(dev, STATE_IDLE);
-            sx126x_set_cad(dev);
+            _set_state(dev, STATE_CCA);
 
         break;
 
@@ -437,7 +443,7 @@ static int _confirm_op(ieee802154_dev_t *hal, ieee802154_hal_op_t op, void *ctx)
     
 switch (op){
     case IEEE802154_HAL_OP_TRANSMIT:
-       if (info) {
+        if (info) {
             info->status = (dev->cad_detected) ? TX_STATUS_MEDIUM_BUSY : TX_STATUS_SUCCESS;
         }
 
@@ -454,7 +460,11 @@ switch (op){
         break;
 
     case IEEE802154_HAL_OP_CCA:
+        if (!dev->cad_done)
+            eagain = true;
+        else {
             *((bool*) ctx) = !dev->cad_detected;
+        }
     break;
 
     default:

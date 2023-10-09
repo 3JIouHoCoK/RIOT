@@ -89,8 +89,7 @@ typedef enum {
     STATE_TX,
     STATE_ACK,
     STATE_RX,
-    STATE_CCA_CLEAR,
-    STATE_CCA_BUSY,
+    STATE_CCA,
 } sx126x_state_t;
 
 /**
@@ -127,6 +126,7 @@ struct sx126x {
     bool radio_sleep;                       /**< Radio sleep status */
     sx126x_cad_params_t cad_params;         /**< Radio Channel Activity Detection parametres */
     bool cad_detected;                      /**< Channel Activity Detected Flag*/
+    bool cad_done;                          /**< Channel Activity Detection Done Flag*/
 
     bool ifs        : 1;    /**< if true, the device is currently inside the IFS period */
     bool cca_send   : 1;    /**< whether the next transmission uses CCA or not */
