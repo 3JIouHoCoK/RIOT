@@ -69,7 +69,7 @@ const sx126x_pa_cfg_params_t hpa_cfg = {
     .device_sel = 0x00,
     .pa_lut = 0x01
 };
-
+#if !IS_USED(MODULE_SX126X_RADIO_HAL)
 void sx126x_setup(sx126x_t *dev, const sx126x_params_t *params, uint8_t index)
 {
     netdev_t *netdev = &dev->netdev;
@@ -78,7 +78,7 @@ void sx126x_setup(sx126x_t *dev, const sx126x_params_t *params, uint8_t index)
     dev->params = (sx126x_params_t *)params;
     netdev_register(&dev->netdev, NETDEV_SX126X, index);
 }
-
+#endif
 static const uint16_t _bw_khz[3] = {
     [LORA_BW_125_KHZ] = 125,
     [LORA_BW_250_KHZ] = 250,

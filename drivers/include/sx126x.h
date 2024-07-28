@@ -27,9 +27,14 @@
 
 #include "net/netdev.h"
 
+#include "net/ieee802154/radio.h"
+
 #include "periph/gpio.h"
 #include "periph/spi.h"
 
+#include "kernel_defines.h"
+
+#include "ztimer.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -79,6 +84,14 @@ typedef enum {
     SX126X_TYPE_STM32WL,
 } sx126x_type_t;
 
+typedef enum {
+    STATE_IDLE,
+    STATE_TX,
+    STATE_ACK,
+    STATE_RX,
+    STATE_CCA
+} sx126x_state_t;
+
 /**
  * @brief   Device initialization parameters
  */
@@ -110,6 +123,26 @@ struct sx126x {
     uint32_t channel;                       /**< Current channel frequency (in Hz) */
     uint16_t rx_timeout;                    /**< Rx Timeout in terms of symbols */
     bool radio_sleep;                       /**< Radio sleep status */
+#if(IS_USED(MODULE_SX126X_RADIO_HAL)) 
+    sx126x_cad_params_t cad_params;         /**< Radio Channel Activity Detection parametres */
+    bool cad_detected;                      /**< Channel Activity Detected Flag*/
+
+    bool ifs        : 1;    /**< if true, the device is currently inside the IFS period */
+    bool cca_send   : 1;    /**< whether the next transmission uses CCA or not */
+    bool ack_filter : 1;    /**< whether the ACK filter is activated or not */
+    bool promisc    : 1;    /**< whether the device is in promiscuous mode or not */
+    bool pending    : 1;    /**< whether there pending bit should be set in the ACK frame or not */
+
+    uint8_t size;                           /**< size of the last received packet */
+    sx126x_state_t state;
+
+    ztimer_t ack_timer;
+    uint8_t seq_num;
+
+    uint8_t short_addr[IEEE802154_SHORT_ADDRESS_LEN];    /**< Short (2 bytes) device address */
+    uint8_t long_addr[IEEE802154_LONG_ADDRESS_LEN];     /**< Long (8 bytes) device address */
+    uint16_t pan_id;                                    /**< PAN ID */
+#endif
 };
 
 /**
@@ -122,6 +155,9 @@ struct sx126x {
  */
 void sx126x_setup(sx126x_t *dev, const sx126x_params_t *params, uint8_t index);
 
+void sx126x_hal_setup(sx126x_t *dev, ieee802154_dev_t *hal);
+
+void sx126x_hal_task_handler(ieee802154_dev_t* hal);
 /**
  * @brief   Initialize the given device
  *

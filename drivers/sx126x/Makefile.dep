@@ -3,4 +3,9 @@ USEMODULE += netdev_legacy_api
 USEPKG += driver_sx126x
 FEATURES_REQUIRED += periph_gpio_irq
 
-USEMODULE += lora
+ifneq (,$(filter ieee802154,$(USEMODULE)))
+    USEMODULE += sx126x_radio_hal
+    USEMODULE += checksum
+else
+    USEMODULE += lora
+endif

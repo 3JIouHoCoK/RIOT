@@ -268,6 +268,9 @@ static ieee802154_dev_t *_reg_callback(ieee802154_dev_type_t type, void *opaque)
         case IEEE802154_DEV_TYPE_MRF24J40:
             printf("mrf24j40");
             break;
+        case IEEE802154_DEV_TYPE_SX126X:
+            printf("sx126x");
+            break;
     }
 
     puts(".");
@@ -319,7 +322,10 @@ static int _init(void)
 
     /* Set PHY configuration */
     ieee802154_phy_conf_t conf = {.channel=CONFIG_IEEE802154_DEFAULT_CHANNEL, .page=CONFIG_IEEE802154_DEFAULT_SUBGHZ_PAGE, .pow=CONFIG_IEEE802154_DEFAULT_TXPOWER};
-
+    if(ieee802154_radio_has_sub_ghz(&_radio))
+    {
+        conf.channel = CONFIG_IEEE802154_DEFAULT_SUBGHZ_CHANNEL;
+    }
     res = ieee802154_radio_config_phy(&_radio, &conf);
     expect(res >= 0);
 
